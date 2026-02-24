@@ -1,11 +1,20 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <meta http-equiv="refresh" content="0; url=https://s.samy.pro.bd">
-    
     <script type="text/javascript">
-        window.location.href = "https://sadman.samy.pro.bd"
+        // 1. Get the current path (everything after .bd)
+        var path = window.location.pathname;
+        var search = window.location.search; // for things like ?m=1
+        var hash = window.location.hash;     // for things like #section1
+
+        // 2. Combine them with your new subdomain
+        var targetURL = "https://sadman.samy.pro.bd" + path + search + hash;
+
+        // 3. Execute the redirect
+        window.location.replace(targetURL);
     </script>
+    
+    <meta http-equiv="refresh" content="0; url=https://sadman.samy.pro.bd">
     
     <title>Redirecting...</title>
   </head>
