@@ -1,24 +1,35 @@
 <!DOCTYPE html>
 <html>
   <head>
+    <meta charset="UTF-8">
+    <title>Redirecting...</title>
     <script type="text/javascript">
-        // 1. Get the current path (everything after .bd)
-        var path = window.location.pathname;
-        var search = window.location.search; // for things like ?m=1
-        var hash = window.location.hash;     // for things like #section1
+        // 1. Get the path and clean it
+        var path = window.location.pathname.toLowerCase();
+        var search = window.location.search;
+        var hash = window.location.hash;
+        
+        // Remove slashes from start/end (e.g., "/2fa/" becomes "2fa")
+        var cleanPath = path.replace(/^\/|\/$/g, '');
 
-        // 2. Combine them with your new subdomain
+        // 2. Default Destination (for general blog posts/pages)
         var targetURL = "https://sadman.samy.pro.bd" + path + search + hash;
 
-        // 3. Execute the redirect
+        // 3. Specific Redirect Rules
+        if (cleanPath === "2fa") {
+            targetURL = "https://ss.samy.pro.bd/p/2fa.html" + search + hash;
+        } 
+        // You can add more rules like this:
+        // else if (cleanPath === "contact") { targetURL = "https://example.com/contact"; }
+
+        // 4. Execute
         window.location.replace(targetURL);
     </script>
     
-    <meta http-equiv="refresh" content="0; url=https://sadman.samy.pro.bd">
-    
-    <title>Redirecting...</title>
+    <meta http-equiv="refresh" content="2; url=https://sadman.samy.pro.bd">
   </head>
-  <body>
-    <p>Redirecting you to <a href="https://sadman.samy.pro.bd">s.samy.pro.bd</a>...</p>
+  <body style="font-family: sans-serif; text-align: center; margin-top: 50px;">
+    <p>Redirecting you to the requested page...</p>
+    <p>If you are not redirected, <a href="https://sadman.samy.pro.bd">click here</a>.</p>
   </body>
 </html>
