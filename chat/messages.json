@@ -1,6 +1,0 @@
-[
-  { "text": "chat1", "isMe": false },
-  { "text": "chat2", "isMe": true },
-  { "text": "chat3", "isMe": false },
-  { "text": "chat4", "isMe": true }
-]
