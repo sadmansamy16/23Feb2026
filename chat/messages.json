@@ -1,0 +1,12 @@
+[
+  { "text": "chat1", "isMe": false },
+  { "text": "chat2", "isMe": true },
+  { "text": "chat3", "isMe": false },
+  { "text": "chat4", "isMe": true },
+  { "text": "chat5", "isMe": false },
+  { "text": "chat6", "isMe": true },
+  { "text": "chat7", "isMe": false },
+  { "text": "chat8", "isMe": true },
+  { "text": "chat9", "isMe": false },
+  { "text": "Visit my site: https://samy.pro.bd", "isMe": true }
+]
