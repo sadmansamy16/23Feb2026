@@ -4,19 +4,3 @@
   { "text": "chat3", "isMe": false },
   { "text": "chat4", "isMe": true }
 ]
-  { "text": "chat36", "isMe": true },
-  { "text": "chat37", "isMe": false },
-  { "text": "chat38", "isMe": true },
-  { "text": "chat39", "isMe": false },
-  { "text": "chat40", "isMe": true },
-  { "text": "chat41", "isMe": false },
-  { "text": "chat42", "isMe": true },
-  { "text": "chat43", "isMe": false },
-  { "text": "chat44", "isMe": true },
-  { "text": "chat45", "isMe": false },
-  { "text": "chat46", "isMe": true },
-  { "text": "chat47", "isMe": false },
-  { "text": "chat48", "isMe": true },
-  { "text": "chat49", "isMe": false },
-  { "text": "chat50", "isMe": true }
-]
