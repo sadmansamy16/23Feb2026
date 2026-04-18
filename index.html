@@ -1,20 +1,18 @@
 <!DOCTYPE html>
 <html>
-  <head>
-<link rel="manifest" href="/manifest.json">
+  <head><link rel="manifest" href="/manifest.json">
 
 <script>
   if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      // We check the path to make sure we don't double-register on the chat page
-      if (!window.location.pathname.startsWith('/chat')) {
-        navigator.serviceWorker.register('/sw.js')
-          .then(reg => console.log('Samy Root PWA Ready'))
-          .catch(err => console.log('PWA Error:', err));
-      }
-    });
+    // Only register if we are NOT in the chat folder
+    if (!window.location.pathname.startsWith('/chat')) {
+      navigator.serviceWorker.register('/sw.js', { scope: '/' })
+        .then(() => console.log('Root PWA Active'))
+        .catch(err => console.error('PWA Error:', err));
+    }
   }
 </script>
+
 
     <meta charset="UTF-8">
     <title>Redirecting...</title>
