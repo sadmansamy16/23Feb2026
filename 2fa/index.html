@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Two Factor Authenticator Web</title>
+    <script src="https://unpkg.com/@otplib/preset-browser@^12.0.0/buffer.js"></script>
+    <script src="https://unpkg.com/@otplib/preset-browser@^12.0.0/index.js"></script>
+    <style>
+        /* Exact Colors from Screenshot */
+        :root {
+            --bg-color: #000000;
+            --card-bg: #F8F9FA;
+            --input-border: #E0E0E0;
+            --text-primary: #000000;
+            --text-secondary: #808080;
+            --primary-blue: #007BFF;
+            --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
+
+        /* Prevent scrolling and enforce dark theme */
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            font-family: var(--font-family);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow: hidden; /* Lock the screen view */
+        }
+
+        /* Mobile Frame Styling */
+        .phone-frame {
+            width: 100%;
+            height: 100vh;
+            max-width: 450px; /* Limits width on desktop */
+            background-color: var(--bg-color);
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Fake Android Status Bar */
+        .status-bar {
+            height: 35px;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 15px;
+            font-size: 14px;
+            opacity: 0.8;
+        }
+
+        /* Fake Chrome URL Bar */
+        .browser-bar {
+            height: 50px;
+            display: flex;
+            align-items: center;
+            padding: 0 15px;
+            gap: 15px;
+            color: white;
+            border-bottom: 1px solid #333;
+        }
+        .url-box {
+            flex-grow: 1;
+            background: #202124;
+            padding: 8px 12px;
+            border-radius: 20px;
+            font-size: 14px;
+            color: #bdc1c6;
+            text-align: center;
+        }
+        .icon { opacity: 0.7; cursor: pointer; }
+
+        /* Main Page Content */
+        .content {
+            background-color: #FFFFFF; /* White main background */
+            flex-grow: 1;
+            padding: 20px;
+            border-top-left-radius: 15px;
+            border-top-right-radius: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            overflow-y: auto;
+        }
+
+        h1.main-title {
+            font-size: 20px;
+            font-weight: 600;
+            margin: 10px 0;
+            text-align: center;
+        }
+
+        /* The white card from your image */
+        .authenticator-card {
+            background-color: var(--card-bg);
+            border-radius: 20px;
+            padding: 25px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+
+        .authenticator-card h2 {
+            margin: 0;
+            font-size: 22px;
+            font-weight: 500;
+        }
+
+        .authenticator-card p {
+            margin: 0;
+            color: var(--text-secondary);
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+
+        /* Buttons Row */
+        .button-row {
+            display: flex;
+            width: 100%;
+            gap: 15px;
+        }
+
+        .secondary-btn {
+            flex: 1;
+            background-color: #F0F2F5;
+            color: var(--text-primary);
+            border: 1px solid var(--input-border);
+            padding: 12px;
+            border-radius: 10px;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            cursor: pointer;
+        }
+
+        /* The Secret Key Input Box */
+        .key-input {
+            width: 100%;
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid var(--input-border);
+            background-color: #FFFFFF;
+            font-size: 15px;
+            font-family: monospace; /* Mimic the exact font style */
+            color: var(--text-primary);
+            box-sizing: border-box;
+        }
+        .key-input::placeholder { color: #A0A0A0; }
+
+        /* The Code Display Area */
+        .code-display {
+            width: 100%;
+            padding: 20px;
+            background-color: #FFFFFF;
+            border-radius: 15px;
+            text-align: center;
+            box-sizing: border-box;
+        }
+
+        .code-display .label {
+            color: var(--text-secondary);
+            font-size: 12px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            margin-bottom: 15px;
+            display: block;
+        }
+
+        /* The blue dashes "------" styling */
+        .current-code-dashes {
+            color: var(--primary-blue);
+            font-size: 24px;
+            font-weight: bold;
+            letter-spacing: 5px;
+            margin-bottom: 15px;
+            display: block;
+        }
+
+        /* The blue "Copy Code" button */
+        .copy-btn {
+            width: 100%;
+            background-color: var(--primary-blue);
+            color: white;
+            border: none;
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .copy-btn:active { background-color: #0056b3; }
+
+        /* Next Up and Progress Bar Section */
+        .next-up {
+            width: 100%;
+            margin-top: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .next-label {
+            color: var(--text-secondary);
+            font-size: 12px;
+            text-transform: uppercase;
+        }
+
+        .next-code-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 12px;
+            color: var(--text-primary);
+        }
+
+        /* Match the dashed 'NEXT UP' placeholder */
+        .dashed-placeholder {
+            font-family: monospace;
+            letter-spacing: 1px;
+        }
+
+        /* The precise blue progress bar */
+        .progress-container {
+            width: 100%;
+            height: 5px;
+            background-color: #E0E0E0;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-top: 5px;
+        }
+        .progress-bar {
+            height: 100%;
+            background-color: var(--primary-blue);
+            width: 0%;
+            border-radius: 10px;
+            transition: width 1s linear;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="phone-frame">
+        <div class="status-bar">
+            <span>11:29</span>
+            <div style="display: flex; gap: 4px; align-items: center;">
+                <span style="font-size: 10px;">Vo<br>LTE</span>
+                <span>📶</span>
+                <span>4G</span>
+                <span>🔋 4</span>
+            </div>
+        </div>
+
+        <div class="browser-bar">
+            <span class="icon">🏠</span>
+            <span class="icon">🔐</span>
+            <div class="url-box">s.samy.pro.bd/2f</div>
+            <span class="icon">➕</span>
+            <span class="icon">68</span>
+            <span class="icon">⋮</span>
+        </div>
+
+        <div class="content">
+            <h1 class="main-title">Two Factor Authenticator Web</h1>
+
+            <div class="authenticator-card">
+                <h2>Authenticator</h2>
+                <p>Scan QR or enter secret key</p>
+                
+                <div class="button-row">
+                    <button class="secondary-btn">📷 Camera</button>
+                    <button class="secondary-btn">🖼️ File</button>
+                </div>
+
+                <input type="text" id="secretKey" class="key-input" placeholder="Enter Secret Key (e.g. JBS...)">
+
+                <div class="code-display">
+                    <span class="label">CURRENT CODE</span>
+                    <div id="currentCode" class="current-code-dashes">------</div>
+                    <button class="copy-btn" id="copyButton" onclick="copyCode()">Copy Code</button>
+                </div>
+
+                <div class="next-up">
+                    <div class="next-label">NEXT UP</div>
+                    <div class="next-code-row">
+                        <span class="dashed-placeholder">------ 📄</span>
+                        <span id="timerText">30s</span>
+                    </div>
+                    <div class="progress-container">
+                        <div class="progress-bar" id="progressBar"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Use otplib to handle TOTP logic
+        const { authenticator } = window.otplib;
+
+        // Configuration
+        authenticator.options = { epoch: Date.now(), step: 30, window: 1 };
+
+        const secretInput = document.getElementById('secretKey');
+        const codeDisplay = document.getElementById('currentCode');
+        const progressBar = document.getElementById('progressBar');
+        const timerText = document.getElementById('timerText');
+
+        let currentCode = null;
+
+        // Function to update the displayed code based on the secret key
+        function updateCode() {
+            const secret = secretInput.value.trim().toUpperCase();
+            
+            if (!secret) {
+                codeDisplay.innerText = "------";
+                currentCode = null;
+                return;
+            }
+
+            try {
+                // Remove spaces and attempt to generate code
+                const sanitizedSecret = secret.replace(/\s+/g, '');
+                currentCode = authenticator.generate(sanitizedSecret);
+                
+                // Format the code like the screenshot (### ###)
+                codeDisplay.innerText = currentCode.substring(0, 3) + " " + currentCode.substring(3, 6);
+                codeDisplay.style.letterSpacing = "normal"; // Reset spacing when code is shown
+            } catch (err) {
+                // If invalid base32, show dashes
+                codeDisplay.innerText = "------";
+                codeDisplay.style.letterSpacing = "5px"; // Restore dashes spacing
+                currentCode = null;
+            }
+        }
+
+        // Function to update the 30-second progress bar
+        function updateProgress() {
+            const epoch = Math.round(new Date().getTime() / 1000.0);
+            const step = 30;
+            const timeLeft = step - (epoch % step);
+            
+            // Calculate percentage (30s = 100%, 0s = 0%)
+            const percent = (timeLeft / step) * 100;
+            progressBar.style.width = percent + "%";
+            
+            // Update the '30s' text
+            timerText.innerText = timeLeft + "s";
+
+            // If the timer just reset, generate a new code
+            if (timeLeft === step) {
+                updateCode();
+            }
+        }
+
+        // Copy code function
+        function copyCode() {
+            if (!currentCode) return;
+            navigator.clipboard.writeText(currentCode);
+            alert("Code copied!");
+        }
+
+        // Initialize listeners and intervals
+        secretInput.addEventListener('input', updateCode);
+        
+        // Start the timer loop immediately and sync every second
+        updateProgress();
+        setInterval(updateProgress, 1000);
+
+    </script>
+</body>
+</html>
