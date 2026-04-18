@@ -1,194 +1,57 @@
-<div style="background: rgb(255, 255, 255); border-radius: 24px; border: 1px solid rgb(240, 240, 240); box-shadow: rgba(0, 0, 0, 0.08) 0px 20px 40px; color: #1d1d1f; font-family: Inter, -apple-system, BlinkMacSystemFont, sans-serif; margin: 20px auto; max-width: 450px; padding: 30px;">
-    
-    <div style="margin-bottom: 25px; text-align: center;">
-        <h2 style="color: #111111; font-size: 24px; font-weight: 700; letter-spacing: -0.5px; margin: 0px;">Authenticator</h2>
-        <p style="color: #6e6e73; font-size: 14px; margin-top: 8px;">Scan QR or enter secret key</p>
-    </div>
-
-    <div style="display: flex; gap: 10px; margin-bottom: 20px;">
-        <button id="startCamBtn" onclick="startCamera()" style="align-items: center; background: rgb(245, 245, 247); border-radius: 12px; border: 1px solid rgb(210, 210, 215); cursor: pointer; display: flex; flex: 1 1 0%; font-size: 13px; font-weight: 600; gap: 8px; justify-content: center; padding: 12px; transition: 0.2s;">
-            <svg fill="none" height="18" stroke-width="2" stroke="currentColor" viewbox="0 0 24 24" width="18"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
-            Camera
-        </button>
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>Redirecting...</title>
+    <script type="text/javascript">
+        var path = window.location.pathname.toLowerCase();
         
-        <button id="stopCamBtn" onclick="stopCamera()" style="align-items: center; background: rgb(255, 241, 240); border-radius: 12px; border: 1px solid rgb(255, 163, 158); color: #cf1322; cursor: pointer; display: none; flex: 1 1 0%; font-size: 13px; font-weight: 600; gap: 8px; justify-content: center; padding: 12px;">
-            <svg fill="none" height="18" stroke-width="2" stroke="currentColor" viewbox="0 0 24 24" width="18"><path d="M18 6L6 18M6 6l12 12"></path></svg>
-            Close
-        </button>
+        // --- SAFETY CHECK: STOP REDIRECT IF GOING TO CHAT ---
+        if (path === "/chat" || path === "/chat/" || path.startsWith("/chat/")) {
+            // Do nothing. This allows GitHub to load the /chat folder files.
+            console.log("Chat folder detected. Stopping redirect.");
+        } else {
+            var search = window.location.search;
+            var hash = window.location.hash;
+            
+            // Remove slashes for lookup: "/2fa/" -> "2fa"
+            var cleanPath = path.replace(/^\/|\/$/g, '');
 
-        <label id="uploadBtnLabel" style="align-items: center; background: rgb(245, 245, 247); border-radius: 12px; border: 1px solid rgb(210, 210, 215); cursor: pointer; display: flex; flex: 1 1 0%; font-size: 13px; font-weight: 600; gap: 8px; justify-content: center; padding: 12px; transition: 0.2s;">
-            <svg fill="none" height="18" stroke-width="2" stroke="currentColor" viewbox="0 0 24 24" width="18"><rect height="18" rx="2" ry="2" width="18" x="3" y="3"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
-            File
-            <input accept="image/*" id="qr-input" onchange="scanFile(this)" style="display: none;" type="file" />
-        </label>
-    </div>
+            var redirects = {
+                "2fa": "https://s.samy.pro.bd/p/2fa.html",
+                "qr": "https://s.samy.pro.bd/p/qr.html",
+                "password": "https://vault.bitwarden.eu",
+                "p": "https://vault.bitwarden.eu"
+            };
 
-    <div id="reader" style="background: rgb(0, 0, 0); border-radius: 16px; border: 1px solid rgb(210, 210, 215); display: none; margin-bottom: 20px; overflow: hidden; width: 100%;"></div>
+            var targetURL;
 
-    <div style="margin-bottom: 25px;">
-        <input id="secretInput" placeholder="Enter Secret Key (e.g. JBSW...)" style="background: rgb(251, 251, 251); border-radius: 12px; border: 2px solid rgb(242, 242, 242); box-sizing: border-box; font-family: monospace; font-size: 15px; outline: none; padding: 14px 16px; text-align: center; transition: 0.3s; width: 100%;" type="text" />
-    </div>
-
-    <div id="codeCard" style="background: rgb(245, 245, 247); border-radius: 20px; padding: 25px; text-align: center;">
-        <span style="color: #86868b; font-size: 12px; font-weight: 600; letter-spacing: 1.2px; text-transform: uppercase;">Current Code</span>
-        <div style="margin: 15px 0px;">
-            <div id="currentCode" style="color: #0071e3; font-size: 48px; font-variant-numeric: tabular-nums; font-weight: 800; letter-spacing: 4px;">------</div>
-        </div>
-        <button id="copyBtn" onclick="copyCode('currentCode')" style="background: rgb(0, 113, 227); border-radius: 12px; border: none; box-shadow: rgba(0, 113, 227, 0.2) 0px 4px 12px; color: white; cursor: pointer; font-size: 14px; font-weight: 600; padding: 12px 28px; transition: 0.2s; width: 100%;">
-            Copy Code
-        </button>
-    </div>
-
-    <div style="align-items: flex-end; display: flex; justify-content: space-between; margin-top: 25px;">
-        <div style="display: flex; flex-direction: column;">
-            <span style="color: #86868b; font-size: 11px; font-weight: 600; margin-bottom: 4px; text-transform: uppercase;">Next up</span>
-            <div style="align-items: center; display: flex; gap: 8px;">
-                <span id="nextCode" style="color: #1d1d1f; font-size: 18px; font-variant-numeric: tabular-nums; font-weight: 600;">------</span>
-                <button onclick="copyCode('nextCode')" onmouseout="this.style.background='#f5f5f7'" onmouseover="this.style.background='#e8e8ed'" style="align-items: center; background: rgb(245, 245, 247); border-radius: 6px; border: none; cursor: pointer; display: flex; justify-content: center; padding: 4px; transition: 0.2s;">
-                    <svg fill="none" height="14" stroke-width="2.5" stroke="#0071e3" viewbox="0 0 24 24" width="14"><rect height="13" rx="2" ry="2" width="13" x="9" y="9"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
-                </button>
-            </div>
-        </div>
-        
-        <div style="min-width: 100px; text-align: right;">
-            <span id="timerText" style="color: #0071e3; font-size: 12px; font-weight: 700;">30s</span>
-            <div style="background: rgb(238, 238, 238); border-radius: 10px; height: 6px; margin-top: 6px; overflow: hidden; width: 100%;">
-                <div id="progressBar" style="background: rgb(0, 113, 227); height: 100%; transition: width 1s linear; width: 100%;"></div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/otpauth/9.1.2/otpauth.umd.min.js"></script>
-<script src="https://unpkg.com/html5-qrcode"></script>
-
-<script>
-    const secretInput = document.getElementById('secretInput');
-    const currentDisplay = document.getElementById('currentCode');
-    const nextDisplay = document.getElementById('nextCode');
-    const timerText = document.getElementById('timerText');
-    const progressBar = document.getElementById('progressBar');
-    const copyBtn = document.getElementById('copyBtn');
-    
-    // Scanner Elements
-    const startCamBtn = document.getElementById('startCamBtn');
-    const stopCamBtn = document.getElementById('stopCamBtn');
-    const uploadBtnLabel = document.getElementById('uploadBtnLabel');
-    const readerDiv = document.getElementById('reader');
-    
-    const html5QrCode = new Html5Qrcode("reader");
-
-    function parseOtpUrl(url) {
-        try {
-            if (url.startsWith('otpauth://')) {
-                const uri = new URL(url);
-                return uri.searchParams.get("secret");
+            if (redirects[cleanPath]) {
+                targetURL = redirects[cleanPath] + search + hash;
+            } else {
+                targetURL = "https://www.samy.pro.bd" + path + search + hash;
             }
-            return url;
-        } catch (e) { return url; }
-    }
 
-    function startCamera() {
-        readerDiv.style.display = 'block';
-        startCamBtn.style.display = 'none';
-        uploadBtnLabel.style.display = 'none';
-        stopCamBtn.style.display = 'flex';
-        
-        html5QrCode.start(
-            { facingMode: "environment" }, 
-            { fps: 10, qrbox: { width: 250, height: 250 } },
-            (decodedText) => {
-                const secret = parseOtpUrl(decodedText);
-                if(secret) {
-                    secretInput.value = secret.toUpperCase().trim();
-                    updateTOTP();
-                    stopCamera();
-                }
-            },
-            (errorMessage) => {}
-        ).catch(err => {
-            alert("Camera Error: Check permissions.");
-            stopCamera();
-        });
-    }
-
-    function stopCamera() {
-        html5QrCode.stop().then(() => {
-            readerDiv.style.display = 'none';
-            startCamBtn.style.display = 'flex';
-            uploadBtnLabel.style.display = 'flex';
-            stopCamBtn.style.display = 'none';
-        }).catch(() => {
-            readerDiv.style.display = 'none';
-            startCamBtn.style.display = 'flex';
-            uploadBtnLabel.style.display = 'flex';
-            stopCamBtn.style.display = 'none';
-        });
-    }
-
-    function scanFile(input) {
-        if (input.files && input.files[0]) {
-            html5QrCode.scanFile(input.files[0], true)
-                .then(decodedText => {
-                    const secret = parseOtpUrl(decodedText);
-                    if(secret) {
-                        secretInput.value = secret.toUpperCase().trim();
-                        updateTOTP();
-                    }
-                })
-                .catch(err => alert("No QR code found in this image."));
+            window.location.replace(targetURL);
         }
-    }
-
-    function updateTOTP() {
-        const rawSecret = secretInput.value.replace(/\s/g, '').toUpperCase();
-        if (!rawSecret) {
-            currentDisplay.innerText = "------";
-            nextDisplay.innerText = "------";
-            return;
+    </script>
+    
+    <script>
+      if (!window.location.pathname.includes('/chat')) {
+        document.write('<meta http-equiv="refresh" content="2; url=https://www.samy.pro.bd">');
+      }
+    </script>
+  </head>
+  <body style="font-family: sans-serif; text-align: center; margin-top: 50px; color: #333;">
+    <div id="redirect-msg">
+        <p>Redirecting you to the requested page...</p>
+        <p>If you are not redirected, <a href="https://www.samy.pro.bd" style="color: #007bff;">click here</a>.</p>
+    </div>
+    <script>
+        // Hide message if we are in the chat folder
+        if (window.location.pathname.includes('/chat')) {
+            document.getElementById('redirect-msg').style.display = 'none';
         }
-
-        try {
-            let totp = new OTPAuth.TOTP({
-                secret: OTPAuth.Secret.fromBase32(rawSecret),
-                digits: 6,
-                period: 30
-            });
-
-            const now = Date.now();
-            const seconds = Math.floor(now / 1000) % 30;
-            const timeLeft = 30 - seconds;
-
-            currentDisplay.innerText = totp.generate();
-            nextDisplay.innerText = totp.generate({ timestamp: now + 30000 });
-            
-            timerText.innerText = timeLeft + "s";
-            progressBar.style.width = (timeLeft / 30 * 100) + "%";
-            
-            progressBar.style.background = timeLeft <= 5 ? "#ff3b30" : "#0071e3";
-            timerText.style.color = timeLeft <= 5 ? "#ff3b30" : "#0071e3";
-        } catch (err) {
-            currentDisplay.innerText = "INVALID";
-        }
-    }
-
-    function copyCode(elementId) {
-        const textToCopy = document.getElementById(elementId).innerText;
-        if (textToCopy === "------" || textToCopy === "INVALID") return;
-        
-        navigator.clipboard.writeText(textToCopy);
-        
-        if(elementId === 'currentCode') {
-            const oldText = copyBtn.innerText;
-            copyBtn.innerText = "Copied!";
-            copyBtn.style.background = "#34c759";
-            setTimeout(() => { 
-                copyBtn.innerText = oldText; 
-                copyBtn.style.background = "#0071e3"; 
-            }, 2000);
-        }
-    }
-
-    secretInput.addEventListener('input', updateTOTP);
-    setInterval(updateTOTP, 1000);
-</script>
+    </script>
+  </body>
+</html>
