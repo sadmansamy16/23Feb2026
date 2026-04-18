@@ -1,20 +1,18 @@
-const CACHE_NAME = 'samy-site-v1';
+const CACHE_NAME = 'samy-root-v1';
 
-// Install event
-self.addEventListener('install', (e) => {
-  console.log('Root Service Worker Installed');
+self.addEventListener('install', (event) => {
+  self.skipWaiting();
 });
 
-// Fetch event
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
 
-  // IF THE URL IS /CHAT, DO NOTHING (Let the other PWA handle it)
+  // BLOCK root PWA from touching the chat folder
   if (url.pathname.startsWith('/chat')) {
     return; 
   }
 
-  // FOR EVERYTHING ELSE (Root, /2fa, etc.), use the network
+  // Handle everything else (Root and /2fa)
   event.respondWith(
     fetch(event.request).catch(() => caches.match(event.request))
   );
