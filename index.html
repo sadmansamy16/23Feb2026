@@ -1,70 +1,72 @@
 <!DOCTYPE html>
-<html>
-  <head><link rel="manifest" href="/manifest.json">
-
-<script>
-  if ('serviceWorker' in navigator) {
-    // Only register if we are NOT in the chat folder
-    if (!window.location.pathname.startsWith('/chat')) {
-      navigator.serviceWorker.register('/sw.js', { scope: '/' })
-        .then(() => console.log('Root PWA Active'))
-        .catch(err => console.error('PWA Error:', err));
-    }
-  }
-</script>
-
-
+<html lang="en">
+<head>
     <meta charset="UTF-8">
-    <title>Redirecting...</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Samy Pro</title>
+    
+    <link rel="manifest" href="/manifest.json">
+
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          // Do not register root SW if we are in the chat folder
+          if (!window.location.pathname.startsWith('/chat')) {
+            navigator.serviceWorker.register('/sw.js', { scope: '/' })
+              .then(() => console.log('Root PWA Active'))
+              .catch(err => console.error('PWA Error:', err));
+          }
+        });
+      }
+    </script>
+
     <script type="text/javascript">
         var path = window.location.pathname.toLowerCase();
         
-        // --- SAFETY CHECK: STOP REDIRECT IF GOING TO CHAT ---
+        // 1. SAFETY CHECK: STOP ALL LOGIC IF IN CHAT
         if (path === "/chat" || path === "/chat/" || path.startsWith("/chat/")) {
-            // Do nothing. This allows GitHub to load the /chat folder files.
-            console.log("Chat folder detected. Stopping redirect.");
+            console.log("Chat folder detected. Loading Chat PWA.");
         } else {
             var search = window.location.search;
             var hash = window.location.hash;
             
-            // Remove slashes for lookup: "/2fa/" -> "2fa"
+            // Clean the path (e.g., "/2faa/" -> "2faa")
             var cleanPath = path.replace(/^\/|\/$/g, '');
 
+            // 2. REDIRECT TABLE
             var redirects = {
-                "2fa": "https://s.samy.pro.bd/p/2fa.html",
+                "2faa": "https://s.samy.pro.bd/p/2fa.html", // New redirect trigger
                 "qr": "https://s.samy.pro.bd/p/qr.html",
                 "password": "https://vault.bitwarden.eu",
                 "p": "https://vault.bitwarden.eu"
             };
 
-            var targetURL;
-
+            // 3. EXECUTE REDIRECT ONLY IF IN LIST
+            // This means /2fa will NOT redirect because it's not in the list anymore
             if (redirects[cleanPath]) {
-                targetURL = redirects[cleanPath] + search + hash;
-            } else {
-                targetURL = "https://www.samy.pro.bd" + path + search + hash;
+                var targetURL = redirects[cleanPath] + search + hash;
+                window.location.replace(targetURL);
+            } else if (cleanPath === "" || cleanPath === "index.html") {
+                // If at root, stay here (Home of PWA)
+                console.log("At root. Welcome to the PWA.");
+            } else if (cleanPath !== "2fa") {
+                // Default redirect for unknown paths (excluding 2fa)
+                // window.location.replace("https://www.samy.pro.bd" + path + search + hash);
             }
-
-            window.location.replace(targetURL);
         }
     </script>
-    
-    <script>
-      if (!window.location.pathname.includes('/chat')) {
-        document.write('<meta http-equiv="refresh" content="2; url=https://www.samy.pro.bd">');
-      }
-    </script>
-  </head>
-  <body style="font-family: sans-serif; text-align: center; margin-top: 50px; color: #333;">
-    <div id="redirect-msg">
-        <p>Redirecting you to the requested page...</p>
-        <p>If you are not redirected, <a href="https://www.samy.pro.bd" style="color: #007bff;">click here</a>.</p>
+</head>
+<body style="background-color: #000; color: #fff; font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0;">
+    <div id="content">
+        <h1>Samy Pro</h1>
+        <p>Loading your workspace...</p>
     </div>
+
     <script>
-        // Hide message if we are in the chat folder
+        // Hide the loading message if the user is in the chat folder
         if (window.location.pathname.includes('/chat')) {
-            document.getElementById('redirect-msg').style.display = 'none';
+            document.body.style.display = 'none';
         }
     </script>
-  </body>
+</body>
 </html>
