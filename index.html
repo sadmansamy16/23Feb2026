@@ -5,20 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Samy Pro</title>
     
-    <link rel="manifest" href="/manifest.json">
-
-    <script>
-      if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-          // Do not register root SW if we are in the chat folder
-          if (!window.location.pathname.startsWith('/chat')) {
-            navigator.serviceWorker.register('/sw.js', { scope: '/' })
-              .then(() => console.log('Root PWA Active'))
-              .catch(err => console.error('PWA Error:', err));
-          }
-        });
-      }
-    </script>
+    
 
     <script type="text/javascript">
         var path = window.location.pathname.toLowerCase();
