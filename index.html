@@ -4,56 +4,41 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Samy Pro</title>
-    
-    
-
     <script type="text/javascript">
-        var path = window.location.pathname.toLowerCase();
-        
-        // 1. SAFETY CHECK: STOP ALL LOGIC IF IN CHAT
-        if (path === "/chat" || path === "/chat/" || path.startsWith("/chat/")) {
-            console.log("Chat folder detected. Loading Chat PWA.");
-        } else {
-            var search = window.location.search;
-            var hash = window.location.hash;
-            
-            // Clean the path (e.g., "/2faa/" -> "2faa")
+        (function() {
+            var path = window.location.pathname.toLowerCase();
             var cleanPath = path.replace(/^\/|\/$/g, '');
+            
+            // 1. CHAT CHECK
+            if (path.startsWith("/chat")) return;
 
             // 2. REDIRECT TABLE
             var redirects = {
-                "2faa": "https://s.samy.pro.bd/p/2fa.html", // New redirect trigger
+                "2faa": "https://s.samy.pro.bd/p/2fa.html",
                 "qr": "https://s.samy.pro.bd/p/qr.html",
                 "password": "https://vault.bitwarden.eu",
                 "p": "https://vault.bitwarden.eu"
             };
 
-            // 3. EXECUTE REDIRECT ONLY IF IN LIST
-            // This means /2fa will NOT redirect because it's not in the list anymore
+            // 3. LOGIC
             if (redirects[cleanPath]) {
-                var targetURL = redirects[cleanPath] + search + hash;
-                window.location.replace(targetURL);
+                window.location.replace(redirects[cleanPath] + window.location.search + window.location.hash);
             } else if (cleanPath === "" || cleanPath === "index.html") {
-                // If at root, stay here (Home of PWA)
-                console.log("At root. Welcome to the PWA.");
-            } else if (cleanPath !== "2fa") {
-                // Default redirect for unknown paths (excluding 2fa)
-                // window.location.replace("https://www.samy.pro.bd" + path + search + hash);
+                window.location.replace("https://www.samy.pro.bd/"); 
             }
-        }
+        })();
     </script>
+    <style>
+        body { background: #000; color: #fff; font-family: sans-serif; margin: 0; }
+        .loader { display: flex; justify-content: center; align-items: center; height: 100vh; }
+    </style>
 </head>
-<body style="background-color: #000; color: #fff; font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0;">
-    <div id="content">
-        <h1>Samy Pro</h1>
-        <p>Loading your workspace...</p>
+<body>
+    <div class="loader">
+        <div style="text-align: center;">
+            <h1>Samy Pro</h1>
+            <p>Redirecting...</p>
+        </div>
     </div>
-
-    <script>
-        // Hide the loading message if the user is in the chat folder
-        if (window.location.pathname.includes('/chat')) {
-            document.body.style.display = 'none';
-        }
-    </script>
 </body>
 </html>
