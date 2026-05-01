@@ -1,58 +1,64 @@
 <!DOCTYPE html>
-<html>
-  <head>
-
+<html lang="en">
+<head>
     <meta charset="UTF-8">
-    <title>Redirecting...</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Samy Pro</title>
     <script type="text/javascript">
-        var path = window.location.pathname.toLowerCase();
-        
-        // --- SAFETY CHECK: STOP REDIRECT IF GOING TO CHAT ---
-        if (path === "/chat" || path === "/chat/" || path.startsWith("/chat/")) {
-            // Do nothing. This allows GitHub to load the /chat folder files.
-            console.log("Chat folder detected. Stopping redirect.");
-        } else {
-            var search = window.location.search;
-            var hash = window.location.hash;
+        (async function() {
+            const path = window.location.pathname.toLowerCase();
+            const cleanPath = path.replace(/^\/|\/$/g, '');
             
-            // Remove slashes for lookup: "/2fa/" -> "2fa"
-            var cleanPath = path.replace(/^\/|\/$/g, '');
+            // 1. CHAT EXCEPTION
+            if (path.startsWith("/chat")) return;
 
-            var redirects = {
-                "2fa": "https://s.samy.pro.bd/p/2fa.html",
-                "qr": "https://s.samy.pro.bd/p/qr.html",
-                "password": "https://vault.bitwarden.eu",
-                "p": "https://vault.bitwarden.eu"
-            };
-
-            var targetURL;
-
-            if (redirects[cleanPath]) {
-                targetURL = redirects[cleanPath] + search + hash;
-            } else {
-                targetURL = "https://www.samy.pro.bd" + path + search + hash;
+            // 2. ROOT REDIRECT
+            if (cleanPath === "" || cleanPath === "index.html") {
+                window.location.replace("https://www.samy.pro.bd/");
+                return;
             }
 
-            window.location.replace(targetURL);
+            try {
+                // 3. FETCH REDIRECT DATA
+                const response = await fetch('/links.json');
+                if (!response.ok) throw new Error("JSON not found");
+                
+                const redirects = await response.json();
+
+                // 4. EXECUTE REDIRECT
+                if (redirects[cleanPath]) {
+                    window.location.replace(redirects[cleanPath] + window.location.search + window.location.hash);
+                } else {
+                    // Fallback if the short-link doesn't exist in your JSON
+                    document.getElementById('status').innerText = "Link not found.";
+                }
+            } catch (err) {
+                console.error("Redirect Error:", err);
+                document.getElementById('status').innerText = "System error. Please try again later.";
+            }
+        })();
+    </script>
+    <style>
+        body { 
+            background: #000; 
+            color: #fff; 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
+            margin: 0; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            height: 100vh; 
+            overflow: hidden;
         }
-    </script>
-    
-    <script>
-      if (!window.location.pathname.includes('/chat')) {
-        document.write('<meta http-equiv="refresh" content="2; url=https://www.samy.pro.bd">');
-      }
-    </script>
-  </head>
-  <body style="font-family: sans-serif; text-align: center; margin-top: 50px; color: #333;">
-    <div id="redirect-msg">
-        <p>Redirecting you to the requested page...</p>
-        <p>If you are not redirected, <a href="https://www.samy.pro.bd" style="color: #007bff;">click here</a>.</p>
+        .container { text-align: center; }
+        h1 { font-weight: 300; letter-spacing: 2px; margin-bottom: 10px; }
+        p { color: #888; font-size: 0.9rem; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Samy Pro</h1>
+        <p id="status">Redirecting...</p>
     </div>
-    <script>
-        // Hide message if we are in the chat folder
-        if (window.location.pathname.includes('/chat')) {
-            document.getElementById('redirect-msg').style.display = 'none';
-        }
-    </script>
-  </body>
+</body>
 </html>
