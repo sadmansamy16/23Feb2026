@@ -36,7 +36,7 @@
             word-break: break-all;
             line-height: 1.5;
             font-weight: 700;
-            transition: transform 0.1s ease, background 0.2s ease;
+            transition: transform 0.1s ease;
         }
         .bubble.clickable { cursor: pointer; }
         .bubble.clickable:active { transform: scale(0.97); }
@@ -113,24 +113,21 @@
 
     init();
 
-    // FIXED SERVICE WORKER REGISTRATION
+    // REGISTER WITHOUT CACHE
     if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('/sw.js', { updateViaCache: 'none' })
-            .then(reg => {
-                // Check for updates periodically
-                reg.update();
-
-                reg.onupdatefound = () => {
-                    const installingWorker = reg.installing;
-                    installingWorker.onstatechange = () => {
-                        if (installingWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                            // Only reloads when a NEW worker is actually ready
-                            console.log('New content available; please refresh.');
-                            window.location.reload();
-                        }
-                    };
+        navigator.serviceWorker.register('/sw.js?nocache=' + Date.now(), { 
+            updateViaCache: 'none' 
+        }).then(reg => {
+            reg.update(); // Manual trigger to check GitHub immediately
+            reg.onupdatefound = () => {
+                const worker = reg.installing;
+                worker.onstatechange = () => {
+                    if (worker.state === 'installed' && navigator.serviceWorker.controller) {
+                        window.location.reload();
+                    }
                 };
-            });
+            };
+        });
     }
 </script>
 </body>
