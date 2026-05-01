@@ -1,5 +1,8 @@
 {
-  "example": "https://www.google.com",
-  "fb": "https://facebook.com/your-profile",
-  "git": "https://github.com/Samy-pro-bd"
+  "2faa": "https://s.samy.pro.bd/p/2fa.html",
+  "qr": "https://s.samy.pro.bd/p/qr.html",
+  "password": "https://vault.bitwarden.eu",
+  "p": "https://vault.bitwarden.eu",
+  "m": "https://samy.pro.bd/chat/movies",
+  "list": "samy.pro.bd/redirect.json"
 }
