@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#0b57d0">
-    <link rel="apple-touch-icon" href="icon-192.png">
     <title>SAMY.pro.bd</title>
     <style>
         :root {
@@ -17,17 +16,14 @@
         body {
             background-color: var(--bg);
             color: var(--text);
-            font-family: 'Segoe UI', Roboto, sans-serif;
+            font-family: 'Google Sans', Roboto, Arial, sans-serif;
             margin: 0;
             display: flex;
             justify-content: center;
             padding: 20px;
         }
-        .container {
-            width: 100%;
-            max-width: 500px;
-            margin-top: 20px;
-        }
+        .container { width: 100%; max-width: 500px; margin-top: 20px; }
+        .header { text-align: center; margin-bottom: 20px; font-weight: 600; font-size: 1.2rem; }
         .bubble {
             background: var(--bubble-bg);
             padding: 16px 20px;
@@ -35,45 +31,79 @@
             margin-bottom: 12px;
             box-shadow: 0 1px 3px rgba(0,0,0,0.1);
             border: 1px solid #e3e3e3;
+            line-height: 1.5;
         }
-        .bubble a {
-            color: var(--link);
-            text-decoration: none;
-            word-break: break-all;
+        .bubble a { color: var(--link); text-decoration: none; font-weight: 500; word-break: break-all; }
+        .alert {
+            color: #d93025;
+            background: #fce8e6;
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            text-align: center;
+            font-weight: 500;
+            display: none;
         }
     </style>
 </head>
 <body>
 
-<div class="container" id="list"></div>
+<div class="container">
+    <div id="not-found" class="alert">Your destination doesn't exist.</div>
+    <div id="page-title" class="header">SAMY.pro.bd</div>
+    <div id="content-list"></div>
+</div>
 
 <script>
-    // Register Service Worker (Required for "Install" option)
+    const path = window.location.pathname.split('/').filter(p => p).pop();
+    const listDiv = document.getElementById('content-list');
+    const alertDiv = document.getElementById('not-found');
+    const titleDiv = document.getElementById('page-title');
+
+    async function initialize() {
+        const redirectRes = await fetch('/redirect.json');
+        const redirects = await redirectRes.json();
+
+        // 1. CHECK FOR DIRECT REDIRECT
+        if (path && redirects[path]) {
+            if (redirects[path].startsWith('http')) {
+                window.location.replace(redirects[path]);
+                return;
+            }
+        }
+
+        // 2. SHOW REDIRECT LIST (If path is "list" or path is invalid)
+        if (path === 'list' || (path && !redirects[path])) {
+            if (path !== 'list') alertDiv.style.display = 'block';
+            titleDiv.textContent = "Redirect Directory";
+            
+            Object.keys(redirects).forEach(key => {
+                const div = document.createElement('div');
+                div.className = 'bubble';
+                div.innerHTML = `<strong>${key}:</strong> <a href="${redirects[key]}">${redirects[key]}</a>`;
+                listDiv.appendChild(div);
+            });
+            return;
+        }
+
+        // 3. SHOW ROOT PAGE (links.json)
+        const linksRes = await fetch('/links.json');
+        const links = await linksRes.json();
+        const urlRegex = /(https?:\/\/[^\s]+)/g;
+
+        links.forEach(item => {
+            const div = document.createElement('div');
+            div.className = 'bubble';
+            div.innerHTML = item.text.replace(urlRegex, url => `<a href="${url}" target="_blank">${url}</a>`);
+            listDiv.appendChild(div);
+        });
+    }
+
+    initialize();
+
     if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('/sw.js');
     }
-
-    // Redirect & List Logic
-    const path = window.location.pathname.split('/').filter(p => p).pop();
-
-    fetch('/redirect.json')
-        .then(r => r.json())
-        .then(data => {
-            if (path && data[path] && data[path].startsWith('http')) {
-                window.location.replace(data[path]);
-            }
-            
-            const listDiv = document.getElementById('list');
-            Object.keys(data).forEach(key => {
-                const div = document.createElement('div');
-                div.className = 'bubble';
-                const content = data[key];
-                div.innerHTML = content.startsWith('http') 
-                    ? `<strong>${key}:</strong> <a href="${content}">${content}</a>`
-                    : `<strong>${key}:</strong> ${content}`;
-                listDiv.appendChild(div);
-            });
-        });
 </script>
 </body>
 </html>
