@@ -18,12 +18,12 @@ self.addEventListener('fetch', (event) => {
     event.respondWith(
         fetch(event.request)
             .then((response) => {
-                // If the network is working, update the cache and show fresh content
+                // Network First: Always try to get fresh data
                 return caches.open(CACHE_NAME).then((cache) => {
                     cache.put(event.request, response.clone());
                     return response;
                 });
             })
-            .catch(() => caches.match(event.request)) // Only show cache if user is offline
+            .catch(() => caches.match(event.request)) // Backup: Show cache if offline
     );
 });
