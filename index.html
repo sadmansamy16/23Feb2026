@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#0b57d0">
-    <title>SAMY.pro.bd</title>
+    <title>SAMY PRO</title>
     <style>
         :root {
             --bg: #f8fafd;
@@ -16,7 +16,7 @@
         body {
             background-color: var(--bg);
             color: var(--text);
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Google Sans', Roboto, Arial, sans-serif;
             margin: 0;
             display: flex;
             justify-content: center;
@@ -30,19 +30,21 @@
         .bubble {
             background: var(--bubble-bg);
             padding: 16px 24px;
-            border-radius: 24px;
+            border-radius: 20px;
             margin-bottom: 12px;
-            box-shadow: 0 1px 2px rgba(60,64,67,0.3), 0 1px 3px 1px rgba(60,64,67,0.15);
-            line-height: 1.5;
-            transition: background 0.2s;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+            border: 1px solid #e3e3e3;
+            animation: fadeIn 0.5s ease;
         }
         .bubble a {
             color: var(--link);
             text-decoration: none;
-            word-break: break-all;
             font-weight: 500;
         }
-        .bubble a:hover { text-decoration: underline; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
     </style>
 </head>
 <body>
@@ -51,41 +53,42 @@
     </div>
 
 <script>
-    // 1. PWA Service Worker Registration
-    if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('/sw.js');
-    }
+    // 1. REDIRECT LOGIC
+    // This grabs 'm' or '2faa' from the end of the URL
+    const path = window.location.pathname.split('/').filter(p => p).pop();
 
-    // 2. Redirect Logic
-    const slug = window.location.pathname.split('/').pop();
-    if (slug) {
-        fetch('/redirect.json')
-            .then(r => r.json())
-            .then(routes => {
-                if (routes[slug]) window.location.replace(routes[slug]);
-            });
-    }
-
-    // 3. UI Content Logic
-    const urlRegex = /(https?:\/\/[^\s]+)/g;
-
-    fetch('/links.json')
-        .then(res => res.json())
+    fetch('/redirect.json')
+        .then(r => r.json())
         .then(data => {
-            const list = document.getElementById('content-list');
-            data.forEach(item => {
+            if (path && data[path]) {
+                // If it's a real URL, redirect. If it's just "PUBLIC_LIST", stay on page.
+                if (data[path].startsWith('http')) {
+                    window.location.replace(data[path]);
+                }
+            }
+            
+            // 2. DISPLAY LIST LOGIC (Root Page)
+            // If we are at root or just showing the list
+            const listContainer = document.getElementById('content-list');
+            Object.keys(data).forEach(key => {
+                const val = data[key];
                 const div = document.createElement('div');
                 div.className = 'bubble';
                 
-                // Auto-detect and convert links in text
-                const formattedText = item.text.replace(urlRegex, (url) => {
-                    return `<a href="${url}" target="_blank">${url}</a>`;
-                });
-                
-                div.innerHTML = formattedText;
-                list.appendChild(div);
+                if (val.startsWith('http')) {
+                    div.innerHTML = `<strong>${key}:</strong> <a href="${val}">${val}</a>`;
+                } else {
+                    div.innerHTML = `<strong>${key}:</strong> ${val}`;
+                }
+                listContainer.appendChild(div);
             });
-        });
+        })
+        .catch(err => console.error("Data load error:", err));
+
+    // 3. PWA Registration
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/sw.js');
+    }
 </script>
 </body>
 </html>
