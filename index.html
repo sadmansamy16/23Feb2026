@@ -5,88 +5,40 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Samy Pro</title>
     <style>
-        body { background: #000; color: #fff; font-family: monospace; margin: 0; padding: 20px; }
-        .container { max-width: 600px; margin: 0 auto; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; display: none; }
-        th { text-align: left; color: #444; font-size: 10px; padding: 10px; border-bottom: 1px solid #222; }
-        td { padding: 12px 10px; border-bottom: 1px solid #111; font-size: 13px; word-break: break-all; }
-        a { color: #888; text-decoration: none; }
-        a:hover { color: #fff; }
-        .short { color: #fff; font-weight: bold; }
-        #status { text-align: center; margin-top: 45vh; color: #222; font-size: 12px; }
+        /* Pure black, no cursor, no scrollbars */
+        body { background: #000; margin: 0; overflow: hidden; }
     </style>
-</head>
-<body>
-
-    <div class="container">
-        <div id="status">Syncing...</div>
-        <table id="listTable">
-            <thead>
-                <tr>
-                    <th>PATH</th>
-                    <th>DESTINATION</th>
-                </tr>
-            </thead>
-            <tbody id="listBody"></tbody>
-        </table>
-    </div>
-
-    <script>
+    <script type="text/javascript">
         (async function() {
-            // Get the current slug (e.g., 'list' or 'fthh')
-            const segments = window.location.pathname.split('/').filter(Boolean);
-            const path = segments.length > 0 ? segments[0].toLowerCase() : "";
+            const path = window.location.pathname.toLowerCase();
+            const cleanPath = path.replace(/^\/|\/$/g, '');
             
-            const status = document.getElementById('status');
-            const table = document.getElementById('listTable');
-            const tbody = document.getElementById('listBody');
+            // Skip logic for chat subfolder
+            if (path.startsWith("/chat")) return;
 
-            // 1. Skip logic for chat
-            if (window.location.pathname.includes("/chat")) return;
-
-            // 2. Home redirect
-            if (path === "" || path === "index.html") {
+            // Immediate redirect for root
+            if (cleanPath === "" || cleanPath === "index.html") {
                 window.location.replace("https://www.samy.pro.bd/");
                 return;
             }
 
             try {
-                // 3. Fetch using relative path - most reliable for GitHub
-                const response = await fetch('./links.json?t=' + Date.now());
-                
-                if (!response.ok) throw new Error("File missing");
-                
-                const redirects = await response.json();
-
-                // 4. Public List View
-                if (path === "list") {
-                    status.style.display = "none";
-                    table.style.display = "table";
-                    Object.keys(redirects).forEach(key => {
-                        if(key === "list") return;
-                        const row = `<tr>
-                            <td class="short">/${key}</td>
-                            <td><a href="${redirects[key]}">${redirects[key]}</a></td>
-                        </tr>`;
-                        tbody.innerHTML += row;
-                    });
-                    return;
+                const response = await fetch('/links.json');
+                if (response.ok) {
+                    const redirects = await response.json();
+                    if (redirects[cleanPath]) {
+                        window.location.replace(redirects[cleanPath] + window.location.search + window.location.hash);
+                        return;
+                    }
                 }
-
-                // 5. Redirection Logic
-                if (redirects[path]) {
-                    window.location.replace(redirects[path] + window.location.search + window.location.hash);
-                } else {
-                    window.location.replace("https://www.samy.pro.bd/");
-                }
-
-            } catch (err) {
-                status.innerText = "Connection Failed. Refreshing...";
-                console.error(err);
-                // Auto-retry once after 2 seconds if it fails
-                setTimeout(() => { window.location.reload(); }, 2000);
+            } catch (e) {
+                console.error(e);
             }
+            
+            // If everything fails or link doesn't exist, stay on black or go to home
+            window.location.replace("https://www.samy.pro.bd/");
         })();
     </script>
-</body>
+</head>
+<body></body>
 </html>
