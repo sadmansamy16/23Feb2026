@@ -173,4 +173,40 @@
             
             if (linkMatches && linkMatches.length === 1) {
                 div.classList.add('fullclickable');
-                div.
+                div.onclick = () => window.location.href = linkMatches[0];
+            }
+            div.innerHTML = content.replace(urlRegex, url => `<a href="${url}">${url}</a>`);
+            listDiv.appendChild(div);
+        });
+    }
+
+    function renderRedirects(data) {
+        document.getElementById('page-title').textContent = "Directory";
+        Object.keys(data).forEach(key => {
+            const div = document.createElement('div');
+            div.className = 'bubble fullclickable';
+            div.onclick = () => window.location.href = data[key];
+            div.innerHTML = `<strong>${key}</strong><br><small style="color:var(--link)">${data[key]}</small>`;
+            listDiv.appendChild(div);
+        });
+    }
+
+    init();
+
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/sw.js', { updateViaCache: 'none' })
+        .then(reg => {
+            reg.update();
+            reg.onupdatefound = () => {
+                const worker = reg.installing;
+                worker.onstatechange = () => {
+                    if (worker.state === 'installed' && navigator.serviceWorker.controller) {
+                        window.location.reload();
+                    }
+                };
+            };
+        });
+    }
+</script>
+</body>
+</html>
