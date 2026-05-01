@@ -1,8 +1,5 @@
-{
-    "2faa": "https://s.samy.pro.bd/p/2fa.html",
-    "qr": "https://s.samy.pro.bd/p/qr.html",
-    "password": "https://vault.bitwarden.eu",
-    "p": "https://vault.bitwarden.eu",
-    "m": "https://samy.pro.bd/chat/movies"
-"list": "PUBLIC_LIST"
-}
+[
+  { "text": "Welcome to my minimalist space." },
+  { "text": "Check my projects here: https://github.com/Samy-pro-bd" },
+  { "text": "Feel free to reach out via email." }
+]
