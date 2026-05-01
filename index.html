@@ -34,6 +34,7 @@
             box-shadow: 0 1px 3px rgba(0,0,0,0.06);
             border: 1px solid #e3e3e3;
             word-break: break-all;
+            line-height: 1.5;
         }
         .bubble a { color: var(--link); text-decoration: none; font-weight: 500; }
         .alert {
@@ -61,47 +62,46 @@
     const listDiv = document.getElementById('content-list');
     const alertDiv = document.getElementById('not-found');
     const titleDiv = document.getElementById('page-title');
+    const urlRegex = /(https?:\/\/[^\s]+)/g;
 
     async function init() {
         try {
-            // 1. ROOT CHECK: If samy.pro.bd is visited directly
+            // 1. ROOT CHECK
             if (!path || path === "") {
                 const res = await fetch('/links.json');
                 const links = await res.json();
-                renderBubbles(links, true);
+                renderBubbles(links);
                 showPage();
                 return;
             }
 
-            // 2. REDIRECT CHECK: Fetch shortcuts
+            // 2. REDIRECT CHECK
             const res = await fetch('/redirect.json');
             const redirects = await res.json();
 
             if (redirects[path]) {
-                // If it's a real link, go there immediately
                 window.location.replace(redirects[path]);
             } else if (path === 'list') {
-                // Show the full redirect list
                 renderRedirects(redirects);
                 showPage();
             } else {
-                // Unknown path: Show error and the list
                 alertDiv.style.display = 'block';
                 renderRedirects(redirects);
                 showPage();
             }
         } catch (err) {
-            console.error("Initialization failed", err);
+            console.error(err);
             showPage();
         }
     }
 
     function renderBubbles(data) {
-        const urlRegex = /(https?:\/\/[^\s]+)/g;
         data.forEach(item => {
             const div = document.createElement('div');
             div.className = 'bubble';
-            div.innerHTML = item.text.replace(urlRegex, url => `<a href="${url}">${url}</a>`);
+            // Use the item directly (no .text tag needed)
+            const content = typeof item === 'string' ? item : item.text;
+            div.innerHTML = content.replace(urlRegex, url => `<a href="${url}">${url}</a>`);
             listDiv.appendChild(div);
         });
     }
@@ -111,19 +111,16 @@
         Object.keys(data).forEach(key => {
             const div = document.createElement('div');
             div.className = 'bubble';
-            div.innerHTML = `<strong>${key}:</strong> <a href="${data[key]}">${data[key]}</a>`;
+            const link = data[key];
+            div.innerHTML = `<strong>${key}:</strong> <a href="${link}">${link}</a>`;
             listDiv.appendChild(div);
         });
     }
 
-    function showPage() {
-        document.body.style.opacity = "1";
-    }
+    function showPage() { document.body.style.opacity = "1"; }
 
-    // Run Logic
     init();
 
-    // Service Worker Registration
     if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('/sw.js', { updateViaCache: 'none' });
     }
