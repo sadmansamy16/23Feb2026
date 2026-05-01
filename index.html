@@ -7,18 +7,76 @@
     <meta name="theme-color" content="#0b57d0">
     <title>samy.pro.bd</title>
     <style>
-        :root { --bg: #f8fafd; --bubble-bg: #ffffff; --text: #1f1f1f; --link: #0b57d0; }
-        body { background-color: var(--bg); color: var(--text); font-family: 'Segoe UI', Roboto, sans-serif; margin: 0; display: flex; justify-content: center; padding: 20px; opacity: 0; transition: opacity 0.3s ease-in; }
-        .container { width: 100%; max-width: 500px; margin-top: 20px; }
-        .header { text-align: center; margin-bottom: 25px; font-weight: 600; font-size: 1.2rem; color: #5f6368; }
-        .bubble { background: var(--bubble-bg); padding: 16px 20px; border-radius: 20px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); border: 1px solid #e3e3e3; word-break: break-all; line-height: 1.5; }
-        .bubble a { color: var(--link); text-decoration: none; font-weight: 500; }
-        .alert { color: #d93025; background: #fce8e6; padding: 15px; border-radius: 12px; margin-bottom: 20px; text-align: center; display: none; font-size: 0.9rem; }
+        :root {
+            --bg: #f0f4f9;
+            --bubble-bg: #ffffff;
+            --text: #1a1c1e;
+            --link: #0b57d0;
+            --shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            font-family: 'Segoe UI Variable', system-ui, -apple-system, sans-serif;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            padding: 24px;
+            opacity: 0; 
+            transition: opacity 0.4s ease-out;
+        }
+        .container { width: 100%; max-width: 480px; margin-top: 10vh; }
+        .header { 
+            text-align: center; 
+            margin-bottom: 32px; 
+            font-weight: 700; 
+            font-size: 1.5rem; 
+            letter-spacing: -0.5px;
+            color: var(--text); 
+        }
+        .bubble {
+            background: var(--bubble-bg);
+            padding: 18px 24px;
+            border-radius: 24px;
+            margin-bottom: 16px;
+            box-shadow: var(--shadow);
+            border: 1px solid rgba(0,0,0,0.03);
+            word-break: break-all;
+            line-height: 1.6;
+            font-weight: 600; /* Bolder text */
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        /* Style for clickable bubbles */
+        .bubble.clickable {
+            cursor: pointer;
+        }
+        .bubble.clickable:active {
+            transform: scale(0.98);
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        }
+        .bubble a { 
+            color: var(--link); 
+            text-decoration: none; 
+            border-bottom: 2px solid transparent;
+            transition: border 0.2s;
+        }
+        .bubble a:hover { border-bottom: 2px solid var(--link); }
+        .alert {
+            color: #ba1a1a;
+            background: #ffdad6;
+            padding: 16px;
+            border-radius: 16px;
+            margin-bottom: 24px;
+            text-align: center;
+            font-weight: 700;
+            display: none;
+        }
     </style>
 </head>
 <body>
+
 <div class="container">
-    <div id="not-found" class="alert">Shortcut not found. Showing directory instead.</div>
+    <div id="not-found" class="alert">Shortcut not found.</div>
     <div id="page-title" class="header">samy.pro.bd</div>
     <div id="content-list"></div>
 </div>
@@ -27,7 +85,6 @@
     const path = window.location.pathname.replace(/^\/|\/$/g, '');
     const listDiv = document.getElementById('content-list');
     const alertDiv = document.getElementById('not-found');
-    const titleDiv = document.getElementById('page-title');
     const urlRegex = /(https?:\/\/[^\s]+)/g;
 
     async function init() {
@@ -44,9 +101,6 @@
 
             if (redirects[path]) {
                 window.location.replace(redirects[path]);
-            } else if (path === 'list') {
-                renderRedirects(redirects);
-                showPage();
             } else {
                 alertDiv.style.display = 'block';
                 renderRedirects(redirects);
@@ -59,28 +113,38 @@
         data.forEach(item => {
             const div = document.createElement('div');
             div.className = 'bubble';
-            const content = typeof item === 'string' ? item : item.text;
+            let content = typeof item === 'string' ? item : item.text;
+
+            // Handle [fullclick] tag
+            if (content.includes('[fullclick]')) {
+                const linkMatch = content.match(urlRegex);
+                content = content.replace('[fullclick]', '').trim();
+                if (linkMatch) {
+                    div.classList.add('clickable');
+                    div.onclick = () => window.location.href = linkMatch[0];
+                }
+            }
+
             div.innerHTML = content.replace(urlRegex, url => `<a href="${url}">${url}</a>`);
             listDiv.appendChild(div);
         });
     }
 
     function renderRedirects(data) {
-        titleDiv.textContent = "Redirect Directory";
+        document.getElementById('page-title').textContent = "Directory";
         Object.keys(data).forEach(key => {
             const div = document.createElement('div');
-            div.className = 'bubble';
-            div.innerHTML = `<strong>${key}:</strong> <a href="${data[key]}">${data[key]}</a>`;
+            div.className = 'bubble clickable'; // Redirects are always fullclick
+            div.onclick = () => window.location.href = data[key];
+            div.innerHTML = `<strong>${key}</strong><br><small style="color:var(--link); opacity:0.8">${data[key]}</small>`;
             listDiv.appendChild(div);
         });
     }
 
     function showPage() { document.body.style.opacity = "1"; }
-
     init();
 
     if ('serviceWorker' in navigator) {
-        // This is the CRITICAL line that prevents caching issues
         navigator.serviceWorker.register('/sw.js', { updateViaCache: 'none' });
     }
 </script>
