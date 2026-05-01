@@ -12,6 +12,7 @@
             --bubble-bg: #ffffff;
             --text: #1a1c1e;
             --link: #0b57d0;
+            --input-border: #d1d5db;
         }
         body {
             background-color: var(--bg);
@@ -25,8 +26,29 @@
             transition: opacity 0.4s ease-out;
         }
         .container { width: 100%; max-width: 480px; margin-top: 5vh; }
-        .header { text-align: center; margin-bottom: 32px; font-weight: 800; font-size: 1.6rem; letter-spacing: -0.5px; }
+        .header { text-align: center; margin-bottom: 24px; font-weight: 800; font-size: 1.6rem; letter-spacing: -0.5px; }
         
+        /* New Search Box Styling */
+        .search-container {
+            margin-bottom: 32px;
+        }
+        .search-input {
+            width: 100%;
+            padding: 16px 20px;
+            border-radius: 20px;
+            border: 2px solid transparent;
+            background: var(--bubble-bg);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            font-size: 1rem;
+            font-weight: 600;
+            box-sizing: border-box;
+            outline: none;
+            transition: border-color 0.2s ease;
+        }
+        .search-input:focus {
+            border-color: var(--link);
+        }
+
         .bubble {
             background: var(--bubble-bg);
             padding: 20px 24px;
@@ -40,20 +62,14 @@
             transition: transform 0.1s ease;
             position: relative;
         }
-
-        /* 1-Link Bubbles: Entire area is a button */
         .bubble.fullclickable { cursor: pointer; }
         .bubble.fullclickable:active { transform: scale(0.97); }
         .bubble.fullclickable a { pointer-events: none; }
-
-        /* Multi-Link Bubbles: Links behave normally */
         .bubble a { 
             color: var(--link); 
             text-decoration: none; 
             border-bottom: 1.5px solid rgba(11, 87, 208, 0.1);
         }
-        .bubble a:active { opacity: 0.6; }
-
         .alert {
             color: #ba1a1a;
             background: #ffdad6;
@@ -71,6 +87,11 @@
 <div class="container">
     <div id="not-found" class="alert">Shortcut not found.</div>
     <div id="page-title" class="header">samy.pro.bd</div>
+    
+    <div class="search-container">
+        <input type="text" id="shortcut-input" class="search-input" placeholder="Type a shortcut (e.g. food, 2fa)..." autocomplete="off">
+    </div>
+
     <div id="content-list"></div>
 </div>
 
@@ -78,7 +99,18 @@
     const path = window.location.pathname.replace(/^\/|\/$/g, '');
     const listDiv = document.getElementById('content-list');
     const alertDiv = document.getElementById('not-found');
+    const inputField = document.getElementById('shortcut-input');
     const urlRegex = /(https?:\/\/[^\s]+)/g;
+
+    // Handle Search Box Redirection
+    inputField.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            const val = inputField.value.trim().toLowerCase();
+            if (val) {
+                window.location.href = '/' + val;
+            }
+        }
+    });
 
     async function init() {
         try {
@@ -104,15 +136,11 @@
             const div = document.createElement('div');
             div.className = 'bubble';
             const content = typeof item === 'string' ? item : item.text;
-            
             const linkMatches = content.match(urlRegex);
-            
-            // Logic: 1 link = Full Click, 2+ links = Normal Individual Clicks
             if (linkMatches && linkMatches.length === 1) {
                 div.classList.add('fullclickable');
                 div.onclick = () => window.location.href = linkMatches[0];
             }
-
             div.innerHTML = content.replace(urlRegex, url => `<a href="${url}">${url}</a>`);
             listDiv.appendChild(div);
         });
@@ -132,9 +160,8 @@
     init();
 
     if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('/sw.js', { 
-            updateViaCache: 'none' 
-        }).then(reg => {
+        navigator.serviceWorker.register('/sw.js', { updateViaCache: 'none' })
+        .then(reg => {
             reg.update();
             reg.onupdatefound = () => {
                 const worker = reg.installing;
