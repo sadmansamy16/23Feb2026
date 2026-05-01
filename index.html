@@ -21,17 +21,17 @@
             display: flex;
             justify-content: center;
             padding: 20px;
-            opacity: 0; /* Hidden initially to prevent flicker */
-            transition: opacity 0.2s ease-in;
+            opacity: 0; 
+            transition: opacity 0.3s ease-in;
         }
         .container { width: 100%; max-width: 500px; margin-top: 20px; }
-        .header { text-align: center; margin-bottom: 25px; font-weight: 600; font-size: 1.2rem; }
+        .header { text-align: center; margin-bottom: 25px; font-weight: 600; font-size: 1.2rem; color: #5f6368; }
         .bubble {
             background: var(--bubble-bg);
             padding: 16px 20px;
             border-radius: 20px;
             margin-bottom: 12px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.06);
             border: 1px solid #e3e3e3;
             word-break: break-all;
         }
@@ -44,13 +44,14 @@
             margin-bottom: 20px;
             text-align: center;
             display: none;
+            font-size: 0.9rem;
         }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div id="not-found" class="alert">Your destination doesn't exist.</div>
+    <div id="not-found" class="alert">Shortcut not found. Showing directory instead.</div>
     <div id="page-title" class="header">SAMY.pro.bd</div>
     <div id="content-list"></div>
 </div>
@@ -61,41 +62,41 @@
     const alertDiv = document.getElementById('not-found');
     const titleDiv = document.getElementById('page-title');
 
-    async function start() {
+    async function init() {
         try {
-            // 1. If Root: Show links.json immediately
+            // 1. ROOT CHECK: If samy.pro.bd is visited directly
             if (!path || path === "") {
                 const res = await fetch('/links.json');
                 const links = await res.json();
-                renderList(links, true);
-                document.body.style.opacity = "1";
+                renderBubbles(links, true);
+                showPage();
                 return;
             }
 
-            // 2. If not root, check redirect.json
+            // 2. REDIRECT CHECK: Fetch shortcuts
             const res = await fetch('/redirect.json');
             const redirects = await res.json();
 
             if (redirects[path]) {
-                // Instant Redirect - No UI shown
+                // If it's a real link, go there immediately
                 window.location.replace(redirects[path]);
             } else if (path === 'list') {
-                // Show official list
+                // Show the full redirect list
                 renderRedirects(redirects);
-                document.body.style.opacity = "1";
+                showPage();
             } else {
-                // Path exists but not in JSON: Show error + directory
+                // Unknown path: Show error and the list
                 alertDiv.style.display = 'block';
                 renderRedirects(redirects);
-                document.body.style.opacity = "1";
+                showPage();
             }
-        } catch (e) {
-            console.error(e);
-            document.body.style.opacity = "1";
+        } catch (err) {
+            console.error("Initialization failed", err);
+            showPage();
         }
     }
 
-    function renderList(data, isText) {
+    function renderBubbles(data) {
         const urlRegex = /(https?:\/\/[^\s]+)/g;
         data.forEach(item => {
             const div = document.createElement('div');
@@ -115,7 +116,17 @@
         });
     }
 
-    start();
+    function showPage() {
+        document.body.style.opacity = "1";
+    }
+
+    // Run Logic
+    init();
+
+    // Service Worker Registration
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/sw.js', { updateViaCache: 'none' });
+    }
 </script>
 </body>
 </html>
