@@ -6,108 +6,60 @@
     <title>Samy's Chat</title>
     <link rel="manifest" href="manifest.json">
     <style>
-        body { 
-            background-color: #e7ebf0; 
-            margin: 0; 
-            font-family: -apple-system, system-ui, Roboto, sans-serif; 
-            display: flex; 
-            justify-content: center; 
-            height: 100vh;
-            overflow: hidden;
-        }
-        .chat-container { 
-            width: 100%; 
-            max-width: 600px; 
-            height: 100%; 
-            padding: 15px; 
-            box-sizing: border-box; 
-            display: flex; 
-            flex-direction: column; 
-            gap: 12px; 
-            overflow-y: auto; 
-            background-image: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png'); 
-            background-blend-mode: overlay;
-            background-attachment: fixed;
-        }
-        .bubble { 
-            max-width: 80%; 
-            padding: 12px 18px; 
-            border-radius: 18px; 
-            font-size: 18px; 
-            line-height: 1.5; 
-            color: #000; 
-            box-shadow: 0 1px 1px rgba(0,0,0,0.1); 
-            word-wrap: break-word; 
-            position: relative;
-        }
+        body { background-color: #e7ebf0; margin: 0; font-family: -apple-system, system-ui, Roboto, sans-serif; display: flex; justify-content: center; }
+        .chat-container { width: 100%; max-width: 600px; height: 100vh; padding: 15px; box-sizing: border-box; display: flex; flex-direction: column; gap: 12px; overflow-y: auto; background-image: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png'); background-blend-mode: overlay; }
+        /* Restored your original font size and bubble padding */
+        .bubble { max-width: 80%; padding: 12px 18px; border-radius: 18px; font-size: 18px; line-height: 1.5; color: #000; box-shadow: 0 1px 1px rgba(0,0,0,0.1); word-wrap: break-word; }
         .right { align-self: flex-end; background-color: #effdde; border-bottom-right-radius: 4px; }
         .left { align-self: flex-start; background-color: #ffffff; border-bottom-left-radius: 4px; }
-        
-        /* Link Styling */
-        .bubble a { 
-            color: #00488d; 
-            text-decoration: underline; 
-            font-weight: bold; 
-        }
-        .bubble a:hover {
-            color: #007aff;
-        }
+        .bubble a { color: #00488d; text-decoration: none; font-weight: bold; }
     </style>
 </head>
 <body>
     <div id="chat" class="chat-container"></div>
-
     <script>
-        let isFirstLoad = true;
+        let isFirstLoad = true; // Variable to control the initial view
 
         function linkify(text) {
-            // 1. Handle Markdown-style links: [Text](URL)
-            const markdownLinkPattern = /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g;
-            text = text.replace(markdownLinkPattern, '<a href="$2" target="_blank">$1</a>');
-
-            // 2. Handle raw URLs (if they aren't already inside an <a> tag)
             const urlPattern = /(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/ig;
-            text = text.replace(urlPattern, (match) => {
-                // Check if this URL is already inside an href attribute
-                if (text.includes(`href="${match}"`)) return match;
-                return `<a href="${match}" target="_blank">${match}</a>`;
-            });
-
-            return text;
+            const wwwPattern = /(^|[^\/])(www\.[\S]+(\b|$))/gim;
+            return text.replace(urlPattern, '<a href="$1" target="_blank">$1</a>').replace(wwwPattern, '$1<a href="http://$2" target="_blank">$2</a>');
         }
 
         async function loadMessages() {
             try {
                 const chat = document.getElementById('chat');
+                
+                // Determine if the user is currently at the bottom before we refresh
                 const isAtBottom = chat.scrollHeight - chat.clientHeight <= chat.scrollTop + 50;
 
-                const response = await fetch('./messages.json?t=' + Date.now(), { cache: "no-store" });
+                const response = await fetch('./messages.json?t=' + Date.now());
                 const messages = await response.json();
                 
-                // Build the HTML
-                chat.innerHTML = messages.map(msg => {
+                chat.innerHTML = ''; 
+                messages.forEach(msg => {
+                    const div = document.createElement('div');
                     const sideClass = (msg[1] === 'r') ? 'right' : 'left';
-                    return `<div class="bubble ${sideClass}">${linkify(msg[0])}</div>`;
-                }).join('');
+                    div.className = 'bubble ' + sideClass;
+                    div.innerHTML = linkify(msg[0]);
+                    chat.appendChild(div);
+                });
 
                 if (isFirstLoad) {
-                    // Start at the bottom to see latest messages
-                    chat.scrollTop = chat.scrollHeight;
+                    // On the very first open, force the scroll to the top
+                    chat.scrollTop = 0;
                     isFirstLoad = false;
                 } else if (isAtBottom) {
+                    // On auto-refresh, only scroll down if the user was already at the bottom
                     chat.scrollTop = chat.scrollHeight;
                 }
-            } catch (e) { 
-                console.log("Syncing..."); 
-            }
+            } catch (e) { console.log("Updating..."); }
         }
 
-        // Initial load
         loadMessages();
-        
-        // Refresh every 10 seconds
         setInterval(loadMessages, 10000);
 
+        // PWA Installation Script
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('sw.js');
         }
