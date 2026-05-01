@@ -3,5 +3,6 @@
   "qr": "https://s.samy.pro.bd/p/qr.html",
   "password": "https://vault.bitwarden.eu",
   "p": "https://vault.bitwarden.eu",
+"list": "https://samy.pro.bd/links.json",
   "m": "https://samy.pro.bd/chat/movies"
 }
