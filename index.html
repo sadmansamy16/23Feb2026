@@ -27,7 +27,6 @@
         .container { width: 100%; max-width: 480px; margin-top: 5vh; }
         .header { text-align: center; margin-bottom: 24px; font-weight: 800; font-size: 1.6rem; }
         
-        /* URL Input Wrapper */
         .input-wrapper {
             background: var(--bubble-bg);
             border-radius: 24px;
@@ -41,70 +40,39 @@
         }
         .input-wrapper:focus-within { border-color: var(--link); }
         
-        .prefix {
-            color: #717171;
-            font-weight: 600;
-            white-space: nowrap;
-            user-select: none;
-        }
+        .prefix { color: #717171; font-weight: 600; white-space: nowrap; user-select: none; }
         
         #shortcut-input {
-            border: none;
-            outline: none;
-            padding: 12px 8px;
-            font-size: 1rem;
-            font-weight: 700;
-            width: 100%;
-            background: transparent;
-            color: var(--text);
+            border: none; outline: none; padding: 12px 8px;
+            font-size: 1rem; font-weight: 700; width: 100%;
+            background: transparent; color: var(--text);
         }
 
         .go-btn {
-            background: var(--link);
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 18px;
-            font-weight: 800;
-            cursor: pointer;
-            display: none;
+            background: var(--link); color: white; border: none;
+            padding: 10px 20px; border-radius: 18px; font-weight: 800;
+            cursor: pointer; display: none;
         }
 
         .bubble {
-            background: var(--bubble-bg);
-            padding: 20px 24px;
-            border-radius: 24px;
-            margin-bottom: 16px;
+            background: var(--bubble-bg); padding: 20px 24px;
+            border-radius: 24px; margin-bottom: 16px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.05);
             border: 1px solid rgba(0,0,0,0.02);
-            word-break: break-all;
-            line-height: 1.5;
-            font-weight: 700;
-            transition: transform 0.1s ease;
-            position: relative;
-            /* CRITICAL: Allows \n to work from JSON */
-            white-space: pre-wrap; 
+            word-break: break-all; line-height: 1.5;
+            font-weight: 700; transition: transform 0.1s ease;
+            position: relative; white-space: pre-wrap; 
         }
 
         .bubble.fullclickable { cursor: pointer; }
         .bubble.fullclickable:active { transform: scale(0.97); }
         .bubble.fullclickable a { pointer-events: none; }
-
-        .bubble a { 
-            color: var(--link); 
-            text-decoration: none; 
-            border-bottom: 1.5px solid rgba(11, 87, 208, 0.1);
-        }
+        .bubble a { color: var(--link); text-decoration: none; border-bottom: 1.5px solid rgba(11, 87, 208, 0.1); }
 
         .alert {
-            color: #ba1a1a;
-            background: #ffdad6;
-            padding: 16px;
-            border-radius: 16px;
-            margin-bottom: 24px;
-            text-align: center;
-            font-weight: 700;
-            display: none;
+            color: #ba1a1a; background: #ffdad6; padding: 16px;
+            border-radius: 16px; margin-bottom: 24px;
+            text-align: center; font-weight: 700; display: none;
         }
     </style>
 </head>
@@ -124,7 +92,7 @@
 </div>
 
 <script>
-    const path = window.location.pathname.replace(/^\/|\/$/g, '');
+    const pathSegments = window.location.pathname.split('/').filter(p => p);
     const listDiv = document.getElementById('content-list');
     const alertDiv = document.getElementById('not-found');
     const inputField = document.getElementById('shortcut-input');
@@ -148,21 +116,42 @@
 
     async function init() {
         try {
-            if (!path || path === "") {
+            // CASE 1: HOMEPAGE
+            if (pathSegments.length === 0) {
                 const res = await fetch('/homepage.json');
                 renderBubbles(await res.json());
-            } else {
-                const res = await fetch('/redirect.json');
-                const redirects = await res.json();
-                if (redirects[path]) {
-                    window.location.replace(redirects[path]);
+            } 
+            // CASE 2: SHORT URL (samy.pro.bd/l/xxxx)
+            else if (pathSegments[0] === 'l' && pathSegments[1]) {
+                const res = await fetch('/shorturl.json');
+                const shorts = await res.json();
+                if (shorts[pathSegments[1]]) {
+                    window.location.replace(shorts[pathSegments[1]]);
                     return;
                 }
-                alertDiv.style.display = 'block';
-                renderRedirects(redirects);
+                showError();
+            }
+            // CASE 3: STANDARD REDIRECT (samy.pro.bd/qr)
+            else {
+                const res = await fetch('/redirect.json');
+                const redirects = await res.json();
+                const key = pathSegments[0];
+                if (redirects[key]) {
+                    window.location.replace(redirects[key]);
+                    return;
+                }
+                showError(redirects);
             }
             document.body.style.opacity = "1";
-        } catch (err) { document.body.style.opacity = "1"; }
+        } catch (err) { 
+            console.error(err);
+            document.body.style.opacity = "1"; 
+        }
+    }
+
+    function showError(redirectData = null) {
+        alertDiv.style.display = 'block';
+        if (redirectData) renderRedirects(redirectData);
     }
 
     function renderBubbles(data) {
@@ -194,6 +183,7 @@
 
     init();
 
+    // Service Worker setup...
     if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('/sw.js', { updateViaCache: 'none' })
         .then(reg => {
