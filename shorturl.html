@@ -22,7 +22,7 @@
 
 <div class="card">
     <h2>Short Link Creator</h2>
-    <input type="url" id="urlInput" placeholder="Enter long URL (https://...)" required>
+    <input type="url" id="urlInput" placeholder="Paste link (https://...)" required>
     <button onclick="generate()">Generate Link</button>
 
     <div id="outputs" style="display: none;">
@@ -37,14 +37,16 @@
 </div>
 
 <script>
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    // Removed ABC... (Uppercase) and simplified the character set
+    const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
 
     async function generate() {
-        const url = document.getElementById('urlInput').value.trim();
-        if (!url) return alert("Enter a URL first");
+        const urlInput = document.getElementById('urlInput').value.trim();
+        if (!urlInput) return alert("Enter a URL first");
 
         let existingKeys = [];
         try {
+            // Fetch live data to prevent duplicates
             const response = await fetch('/shorturl.json');
             const data = await response.json();
             existingKeys = Object.keys(data);
@@ -52,22 +54,33 @@
 
         let code = '';
         let isUnique = false;
+        
         while (!isUnique) {
             code = '';
-            for (let i = 0; i < 4; i++) code += chars.charAt(Math.floor(Math.random() * chars.length));
+            for (let i = 0; i < 4; i++) {
+                code += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
             if (!existingKeys.includes(code)) isUnique = true;
         }
 
-        // Display results
+        // Display results in lowercase
         document.getElementById('outputs').style.display = 'block';
         document.getElementById('shareLink').innerText = `https://samy.pro.bd/l/${code}`;
-        document.getElementById('jsonLine').innerText = `"${code}": "${url}",`;
+        document.getElementById('jsonLine').innerText = `"${code}": "${urlInput}",`;
     }
 
     function copyText(id) {
         const text = document.getElementById(id).innerText;
         navigator.clipboard.writeText(text);
-        alert("Copied!");
+        
+        // Visual feedback
+        const originalText = document.getElementById(id).innerText;
+        document.getElementById(id).innerText = "COPIED!";
+        document.getElementById(id).style.color = "#0b57d0";
+        setTimeout(() => {
+            document.getElementById(id).innerText = originalText;
+            document.getElementById(id).style.color = "";
+        }, 800);
     }
 </script>
 </body>
