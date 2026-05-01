@@ -3,42 +3,89 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Samy Pro</title>
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#0b57d0">
+    <title>SAMY.pro.bd</title>
     <style>
-        /* Pure black, no cursor, no scrollbars */
-        body { background: #000; margin: 0; overflow: hidden; }
+        :root {
+            --bg: #f8fafd;
+            --bubble-bg: #ffffff;
+            --text: #1f1f1f;
+            --link: #0b57d0;
+        }
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            padding: 20px;
+        }
+        .container {
+            width: 100%;
+            max-width: 500px;
+            margin-top: 50px;
+        }
+        .bubble {
+            background: var(--bubble-bg);
+            padding: 16px 24px;
+            border-radius: 24px;
+            margin-bottom: 12px;
+            box-shadow: 0 1px 2px rgba(60,64,67,0.3), 0 1px 3px 1px rgba(60,64,67,0.15);
+            line-height: 1.5;
+            transition: background 0.2s;
+        }
+        .bubble a {
+            color: var(--link);
+            text-decoration: none;
+            word-break: break-all;
+            font-weight: 500;
+        }
+        .bubble a:hover { text-decoration: underline; }
     </style>
-    <script type="text/javascript">
-        (async function() {
-            const path = window.location.pathname.toLowerCase();
-            const cleanPath = path.replace(/^\/|\/$/g, '');
-            
-            // Skip logic for chat subfolder
-            if (path.startsWith("/chat")) return;
-
-            // Immediate redirect for root
-            if (cleanPath === "" || cleanPath === "index.html") {
-                window.location.replace("https://www.samy.pro.bd/");
-                return;
-            }
-
-            try {
-                const response = await fetch('/links.json');
-                if (response.ok) {
-                    const redirects = await response.json();
-                    if (redirects[cleanPath]) {
-                        window.location.replace(redirects[cleanPath] + window.location.search + window.location.hash);
-                        return;
-                    }
-                }
-            } catch (e) {
-                console.error(e);
-            }
-            
-            // If everything fails or link doesn't exist, stay on black or go to home
-            window.location.replace("https://www.samy.pro.bd/");
-        })();
-    </script>
 </head>
-<body></body>
+<body>
+
+<div class="container" id="content-list">
+    </div>
+
+<script>
+    // 1. PWA Service Worker Registration
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/sw.js');
+    }
+
+    // 2. Redirect Logic
+    const slug = window.location.pathname.split('/').pop();
+    if (slug) {
+        fetch('/redirect.json')
+            .then(r => r.json())
+            .then(routes => {
+                if (routes[slug]) window.location.replace(routes[slug]);
+            });
+    }
+
+    // 3. UI Content Logic
+    const urlRegex = /(https?:\/\/[^\s]+)/g;
+
+    fetch('/links.json')
+        .then(res => res.json())
+        .then(data => {
+            const list = document.getElementById('content-list');
+            data.forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'bubble';
+                
+                // Auto-detect and convert links in text
+                const formattedText = item.text.replace(urlRegex, (url) => {
+                    return `<a href="${url}" target="_blank">${url}</a>`;
+                });
+                
+                div.innerHTML = formattedText;
+                list.appendChild(div);
+            });
+        });
+</script>
+</body>
 </html>
