@@ -1,19 +1,11 @@
-const CACHE_NAME = 'samy-pwa-dynamic';
+const CACHE_NAME = 'samy-pwa-v' + Date.now();
 
-self.addEventListener('install', () => {
-    self.skipWaiting(); // Forces the new service worker to take over immediately
-});
+self.addEventListener('install', () => self.skipWaiting());
 
 self.addEventListener('activate', (event) => {
     event.waitUntil(
-        caches.keys().then((cacheNames) => {
-            return Promise.all(
-                cacheNames.map((cache) => {
-                    if (cache !== CACHE_NAME) {
-                        return caches.delete(cache); // Deletes old caches automatically
-                    }
-                })
-            );
+        caches.keys().then((keys) => {
+            return Promise.all(keys.map((key) => caches.delete(key)));
         }).then(() => clients.claim())
     );
 });
