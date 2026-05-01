@@ -59,7 +59,6 @@
             color: var(--text);
         }
 
-        /* Enter/Go Button */
         .go-btn {
             background: var(--link);
             color: white;
@@ -68,7 +67,7 @@
             border-radius: 18px;
             font-weight: 800;
             cursor: pointer;
-            display: none; /* Hidden until typing */
+            display: none;
         }
 
         .bubble {
@@ -82,12 +81,21 @@
             line-height: 1.5;
             font-weight: 700;
             transition: transform 0.1s ease;
+            position: relative;
+            /* CRITICAL: Allows \n to work from JSON */
+            white-space: pre-wrap; 
         }
+
         .bubble.fullclickable { cursor: pointer; }
         .bubble.fullclickable:active { transform: scale(0.97); }
         .bubble.fullclickable a { pointer-events: none; }
-        .bubble a { color: var(--link); text-decoration: none; border-bottom: 1.5px solid rgba(11, 87, 208, 0.1); }
-        
+
+        .bubble a { 
+            color: var(--link); 
+            text-decoration: none; 
+            border-bottom: 1.5px solid rgba(11, 87, 208, 0.1);
+        }
+
         .alert {
             color: #ba1a1a;
             background: #ffdad6;
@@ -128,7 +136,6 @@
         if (val) window.location.href = '/' + val;
     }
 
-    // Toggle button visibility and handle Enter key
     inputField.addEventListener('input', () => {
         goButton.style.display = inputField.value.trim() ? 'block' : 'none';
     });
@@ -164,6 +171,7 @@
             div.className = 'bubble';
             const content = typeof item === 'string' ? item : item.text;
             const linkMatches = content.match(urlRegex);
+            
             if (linkMatches && linkMatches.length === 1) {
                 div.classList.add('fullclickable');
                 div.onclick = () => window.location.href = linkMatches[0];
