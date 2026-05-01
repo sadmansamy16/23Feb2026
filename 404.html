@@ -26,6 +26,7 @@
         }
         .container { width: 100%; max-width: 480px; margin-top: 5vh; }
         .header { text-align: center; margin-bottom: 32px; font-weight: 800; font-size: 1.6rem; letter-spacing: -0.5px; }
+        
         .bubble {
             background: var(--bubble-bg);
             padding: 20px 24px;
@@ -35,12 +36,24 @@
             border: 1px solid rgba(0,0,0,0.02);
             word-break: break-all;
             line-height: 1.5;
-            font-weight: 700; /* Extra bold text for modern look */
+            font-weight: 700;
             transition: transform 0.1s ease;
+            position: relative;
         }
-        .bubble.clickable { cursor: pointer; }
-        .bubble.clickable:active { transform: scale(0.97); }
-        .bubble a { color: var(--link); text-decoration: none; pointer-events: none; }
+
+        /* 1-Link Bubbles: Entire area is a button */
+        .bubble.fullclickable { cursor: pointer; }
+        .bubble.fullclickable:active { transform: scale(0.97); }
+        .bubble.fullclickable a { pointer-events: none; }
+
+        /* Multi-Link Bubbles: Links behave normally */
+        .bubble a { 
+            color: var(--link); 
+            text-decoration: none; 
+            border-bottom: 1.5px solid rgba(11, 87, 208, 0.1);
+        }
+        .bubble a:active { opacity: 0.6; }
+
         .alert {
             color: #ba1a1a;
             background: #ffdad6;
@@ -69,29 +82,21 @@
 
     async function init() {
         try {
-            // 1. ROOT LOAD - Now fetching homepage.json
             if (!path || path === "") {
                 const res = await fetch('/homepage.json');
-                const data = await res.json();
-                renderBubbles(data);
+                renderBubbles(await res.json());
             } else {
-                // 2. REDIRECT LOAD
                 const res = await fetch('/redirect.json');
                 const redirects = await res.json();
-                
                 if (redirects[path]) {
                     window.location.replace(redirects[path]);
                     return;
                 }
-                
                 alertDiv.style.display = 'block';
                 renderRedirects(redirects);
             }
             document.body.style.opacity = "1";
-        } catch (err) { 
-            console.error(err);
-            document.body.style.opacity = "1"; 
-        }
+        } catch (err) { document.body.style.opacity = "1"; }
     }
 
     function renderBubbles(data) {
@@ -100,11 +105,12 @@
             div.className = 'bubble';
             const content = typeof item === 'string' ? item : item.text;
             
-            // Auto-detect link for full-bubble click
-            const linkMatch = content.match(urlRegex);
-            if (linkMatch) {
-                div.classList.add('clickable');
-                div.onclick = () => window.location.href = linkMatch[0];
+            const linkMatches = content.match(urlRegex);
+            
+            // Logic: 1 link = Full Click, 2+ links = Normal Individual Clicks
+            if (linkMatches && linkMatches.length === 1) {
+                div.classList.add('fullclickable');
+                div.onclick = () => window.location.href = linkMatches[0];
             }
 
             div.innerHTML = content.replace(urlRegex, url => `<a href="${url}">${url}</a>`);
@@ -116,7 +122,7 @@
         document.getElementById('page-title').textContent = "Directory";
         Object.keys(data).forEach(key => {
             const div = document.createElement('div');
-            div.className = 'bubble clickable';
+            div.className = 'bubble fullclickable';
             div.onclick = () => window.location.href = data[key];
             div.innerHTML = `<strong>${key}</strong><br><small style="color:var(--link)">${data[key]}</small>`;
             listDiv.appendChild(div);
@@ -125,7 +131,6 @@
 
     init();
 
-    // STABLE SERVICE WORKER REGISTRATION
     if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('/sw.js', { 
             updateViaCache: 'none' 
