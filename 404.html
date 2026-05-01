@@ -9,36 +9,66 @@
             var path = window.location.pathname.toLowerCase();
             var cleanPath = path.replace(/^\/|\/$/g, '');
             
-            // 1. CHAT CHECK
+            // 1. CHAT CHECK - Ignore redirects for the chat directory
             if (path.startsWith("/chat")) return;
 
-            // 2. REDIRECT TABLE
-            var redirects = {
-                "2faa": "https://s.samy.pro.bd/p/2fa.html",
-                "qr": "https://s.samy.pro.bd/p/qr.html",
-                "password": "https://vault.bitwarden.eu",
-                "p": "https://vault.bitwarden.eu"
-            };
-
-            // 3. LOGIC
-            if (redirects[cleanPath]) {
-                window.location.replace(redirects[cleanPath] + window.location.search + window.location.hash);
-            } else if (cleanPath === "" || cleanPath === "index.html") {
-                window.location.replace("https://www.samy.pro.bd/"); 
-            }
+            // 2. FETCH REDIRECTS FROM JSON
+            fetch('/links.json')
+                .then(function(response) {
+                    if (!response.ok) throw new Error('Network response was not ok');
+                    return response.json();
+                })
+                .then(function(redirects) {
+                    // 3. REDIRECT LOGIC
+                    if (redirects[cleanPath]) {
+                        // Redirect to the URL found in JSON, preserving query strings and hashes
+                        window.location.replace(redirects[cleanPath] + window.location.search + window.location.hash);
+                    } else if (cleanPath === "" || cleanPath === "index.html") {
+                        // Default fallback to main site
+                        window.location.replace("https://www.samy.pro.bd/"); 
+                    }
+                })
+                .catch(function(err) {
+                    console.error("Redirect fetch failed:", err);
+                    // Fallback to homepage if the JSON fails or path isn't found
+                    if (cleanPath === "" || cleanPath === "index.html") {
+                        window.location.replace("https://www.samy.pro.bd/");
+                    }
+                });
         })();
     </script>
     <style>
-        body { background: #000; color: #fff; font-family: sans-serif; margin: 0; }
-        .loader { display: flex; justify-content: center; align-items: center; height: 100vh; }
+        /* Minimalist "App-like" UI */
+        body { 
+            background: #000; 
+            color: #fff; 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
+            margin: 0; 
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+        .loader { 
+            text-align: center; 
+        }
+        h1 {
+            font-size: 1.5rem;
+            font-weight: 500;
+            margin-bottom: 8px;
+            letter-spacing: -0.5px;
+        }
+        p {
+            color: #888;
+            font-size: 0.9rem;
+        }
     </style>
 </head>
 <body>
     <div class="loader">
-        <div style="text-align: center;">
-            <h1>Samy Pro</h1>
-            <p>Redirecting...</p>
-        </div>
+        <h1>Samy Pro</h1>
+        <p>Redirecting...</p>
     </div>
 </body>
 </html>
