@@ -7,50 +7,16 @@
     <meta name="theme-color" content="#0b57d0">
     <title>samy.pro.bd</title>
     <style>
-        :root {
-            --bg: #f8fafd;
-            --bubble-bg: #ffffff;
-            --text: #1f1f1f;
-            --link: #0b57d0;
-        }
-        body {
-            background-color: var(--bg);
-            color: var(--text);
-            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            margin: 0;
-            display: flex;
-            justify-content: center;
-            padding: 20px;
-            opacity: 0; 
-            transition: opacity 0.3s ease-in;
-        }
+        :root { --bg: #f8fafd; --bubble-bg: #ffffff; --text: #1f1f1f; --link: #0b57d0; }
+        body { background-color: var(--bg); color: var(--text); font-family: 'Segoe UI', Roboto, sans-serif; margin: 0; display: flex; justify-content: center; padding: 20px; opacity: 0; transition: opacity 0.3s ease-in; }
         .container { width: 100%; max-width: 500px; margin-top: 20px; }
         .header { text-align: center; margin-bottom: 25px; font-weight: 600; font-size: 1.2rem; color: #5f6368; }
-        .bubble {
-            background: var(--bubble-bg);
-            padding: 16px 20px;
-            border-radius: 20px;
-            margin-bottom: 12px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.06);
-            border: 1px solid #e3e3e3;
-            word-break: break-all;
-            line-height: 1.5;
-        }
+        .bubble { background: var(--bubble-bg); padding: 16px 20px; border-radius: 20px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); border: 1px solid #e3e3e3; word-break: break-all; line-height: 1.5; }
         .bubble a { color: var(--link); text-decoration: none; font-weight: 500; }
-        .alert {
-            color: #d93025;
-            background: #fce8e6;
-            padding: 15px;
-            border-radius: 12px;
-            margin-bottom: 20px;
-            text-align: center;
-            display: none;
-            font-size: 0.9rem;
-        }
+        .alert { color: #d93025; background: #fce8e6; padding: 15px; border-radius: 12px; margin-bottom: 20px; text-align: center; display: none; font-size: 0.9rem; }
     </style>
 </head>
 <body>
-
 <div class="container">
     <div id="not-found" class="alert">Shortcut not found. Showing directory instead.</div>
     <div id="page-title" class="header">samy.pro.bd</div>
@@ -66,7 +32,6 @@
 
     async function init() {
         try {
-            // 1. ROOT CHECK
             if (!path || path === "") {
                 const res = await fetch('/links.json');
                 const links = await res.json();
@@ -74,8 +39,6 @@
                 showPage();
                 return;
             }
-
-            // 2. REDIRECT CHECK
             const res = await fetch('/redirect.json');
             const redirects = await res.json();
 
@@ -89,17 +52,13 @@
                 renderRedirects(redirects);
                 showPage();
             }
-        } catch (err) {
-            console.error(err);
-            showPage();
-        }
+        } catch (err) { showPage(); }
     }
 
     function renderBubbles(data) {
         data.forEach(item => {
             const div = document.createElement('div');
             div.className = 'bubble';
-            // Use the item directly (no .text tag needed)
             const content = typeof item === 'string' ? item : item.text;
             div.innerHTML = content.replace(urlRegex, url => `<a href="${url}">${url}</a>`);
             listDiv.appendChild(div);
@@ -111,8 +70,7 @@
         Object.keys(data).forEach(key => {
             const div = document.createElement('div');
             div.className = 'bubble';
-            const link = data[key];
-            div.innerHTML = `<strong>${key}:</strong> <a href="${link}">${link}</a>`;
+            div.innerHTML = `<strong>${key}:</strong> <a href="${data[key]}">${data[key]}</a>`;
             listDiv.appendChild(div);
         });
     }
@@ -122,6 +80,7 @@
     init();
 
     if ('serviceWorker' in navigator) {
+        // This is the CRITICAL line that prevents caching issues
         navigator.serviceWorker.register('/sw.js', { updateViaCache: 'none' });
     }
 </script>
