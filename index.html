@@ -28,9 +28,8 @@
         .header { 
             text-align: center; 
             margin-bottom: 32px; 
-            font-weight: 800; /* Extra bold */
+            font-weight: 800; 
             font-size: 1.6rem; 
-            color: var(--text); 
         }
         .bubble {
             background: var(--bubble-bg);
@@ -41,26 +40,12 @@
             border: 1px solid rgba(0,0,0,0.03);
             word-break: break-all;
             line-height: 1.5;
-            font-weight: 700; /* Bold bubble text */
-            transition: transform 0.2s ease, background 0.2s ease;
-            cursor: default;
+            font-weight: 700; /* Bold text */
+            transition: transform 0.1s ease, background 0.2s ease;
         }
-        /* Clickable State */
-        .bubble.clickable {
-            cursor: pointer;
-        }
-        .bubble.clickable:hover {
-            background: #f8fafd;
-            transform: translateY(-2px);
-        }
-        .bubble.clickable:active {
-            transform: scale(0.98);
-        }
-        .bubble a { 
-            color: var(--link); 
-            text-decoration: none;
-            pointer-events: none; /* Let the bubble handle the click */
-        }
+        .bubble.clickable { cursor: pointer; }
+        .bubble.clickable:active { transform: scale(0.97); }
+        .bubble a { color: var(--link); text-decoration: none; pointer-events: none; }
         .alert {
             color: #ba1a1a;
             background: #ffdad6;
@@ -74,7 +59,6 @@
     </style>
 </head>
 <body>
-
 <div class="container">
     <div id="not-found" class="alert">Shortcut not found.</div>
     <div id="page-title" class="header">samy.pro.bd</div>
@@ -89,27 +73,21 @@
 
     async function init() {
         try {
-            // 1. ROOT LOAD
             if (!path || path === "") {
                 const res = await fetch('/links.json');
-                const links = await res.json();
-                renderBubbles(links);
-                showPage();
-                return;
-            }
-
-            // 2. REDIRECT LOAD
-            const res = await fetch('/redirect.json');
-            const redirects = await res.json();
-
-            if (redirects[path]) {
-                window.location.replace(redirects[path]);
+                renderBubbles(await res.json());
             } else {
+                const res = await fetch('/redirect.json');
+                const redirects = await res.json();
+                if (redirects[path]) {
+                    window.location.replace(redirects[path]);
+                    return;
+                }
                 alertDiv.style.display = 'block';
                 renderRedirects(redirects);
-                showPage();
             }
-        } catch (err) { showPage(); }
+            document.body.style.opacity = "1";
+        } catch (err) { document.body.style.opacity = "1"; }
     }
 
     function renderBubbles(data) {
@@ -117,14 +95,11 @@
             const div = document.createElement('div');
             div.className = 'bubble';
             const content = typeof item === 'string' ? item : item.text;
-            
-            // Auto-detect link for full-bubble click
             const linkMatch = content.match(urlRegex);
             if (linkMatch) {
                 div.classList.add('clickable');
                 div.onclick = () => window.location.href = linkMatch[0];
             }
-
             div.innerHTML = content.replace(urlRegex, url => `<a href="${url}">${url}</a>`);
             listDiv.appendChild(div);
         });
@@ -136,16 +111,28 @@
             const div = document.createElement('div');
             div.className = 'bubble clickable';
             div.onclick = () => window.location.href = data[key];
-            div.innerHTML = `<strong>${key}</strong><br><span style="font-size:0.85rem; color:var(--link); opacity:0.7">${data[key]}</span>`;
+            div.innerHTML = `<strong>${key}</strong><br><small style="color:var(--link)">${data[key]}</small>`;
             listDiv.appendChild(div);
         });
     }
 
-    function showPage() { document.body.style.opacity = "1"; }
     init();
 
+    // AUTO-REFRESH & CACHE BUSTER LOGIC
     if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('/sw.js', { updateViaCache: 'none' });
+        // Adding a timestamp forces the browser to check for a new file
+        navigator.serviceWorker.register('/sw.js?v=' + Date.now(), { updateViaCache: 'none' })
+            .then(reg => {
+                reg.update(); // Manual check for updates
+                reg.onupdatefound = () => {
+                    const worker = reg.installing;
+                    worker.onstatechange = () => {
+                        if (worker.state === 'installed' && navigator.serviceWorker.controller) {
+                            window.location.reload(); // Auto-refresh when update found
+                        }
+                    };
+                };
+            });
     }
 </script>
 </body>
