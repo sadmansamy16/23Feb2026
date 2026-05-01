@@ -1,4 +1,4 @@
-const CACHE_NAME = 'samy-pwa-v1'; // ONLY change this number manually when you want a full clear
+const CACHE_NAME = 'samy-pwa-v1.1'; // ONLY change this number manually when you want a full clear
 
 self.addEventListener('install', (event) => {
     self.skipWaiting();
