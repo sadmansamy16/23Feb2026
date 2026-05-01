@@ -113,15 +113,16 @@
 
     init();
 
-    // REGISTER WITHOUT CACHE
+    // STABLE REGISTRATION - NO INFINITE REFRESH
     if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('/sw.js?nocache=' + Date.now(), { 
+        navigator.serviceWorker.register('/sw.js', { 
             updateViaCache: 'none' 
         }).then(reg => {
-            reg.update(); // Manual trigger to check GitHub immediately
+            reg.update(); // Checks for code changes on GitHub
             reg.onupdatefound = () => {
                 const worker = reg.installing;
                 worker.onstatechange = () => {
+                    // Only reloads once if a brand new worker is actually ready
                     if (worker.state === 'installed' && navigator.serviceWorker.controller) {
                         window.location.reload();
                     }
