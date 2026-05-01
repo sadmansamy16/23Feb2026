@@ -16,24 +16,26 @@
         body {
             background-color: var(--bg);
             color: var(--text);
-            font-family: 'Google Sans', Roboto, Arial, sans-serif;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             margin: 0;
             display: flex;
             justify-content: center;
             padding: 20px;
+            opacity: 0; /* Hidden initially to prevent flicker */
+            transition: opacity 0.2s ease-in;
         }
         .container { width: 100%; max-width: 500px; margin-top: 20px; }
-        .header { text-align: center; margin-bottom: 20px; font-weight: 600; font-size: 1.2rem; }
+        .header { text-align: center; margin-bottom: 25px; font-weight: 600; font-size: 1.2rem; }
         .bubble {
             background: var(--bubble-bg);
             padding: 16px 20px;
             border-radius: 20px;
             margin-bottom: 12px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
             border: 1px solid #e3e3e3;
-            line-height: 1.5;
+            word-break: break-all;
         }
-        .bubble a { color: var(--link); text-decoration: none; font-weight: 500; word-break: break-all; }
+        .bubble a { color: var(--link); text-decoration: none; font-weight: 500; }
         .alert {
             color: #d93025;
             background: #fce8e6;
@@ -41,7 +43,6 @@
             border-radius: 12px;
             margin-bottom: 20px;
             text-align: center;
-            font-weight: 500;
             display: none;
         }
     </style>
@@ -55,55 +56,66 @@
 </div>
 
 <script>
-    const path = window.location.pathname.split('/').filter(p => p).pop();
+    const path = window.location.pathname.replace(/^\/|\/$/g, '');
     const listDiv = document.getElementById('content-list');
     const alertDiv = document.getElementById('not-found');
     const titleDiv = document.getElementById('page-title');
 
-    async function initialize() {
-        const redirectRes = await fetch('/redirect.json');
-        const redirects = await redirectRes.json();
-
-        // 1. CHECK FOR DIRECT REDIRECT
-        if (path && redirects[path]) {
-            if (redirects[path].startsWith('http')) {
-                window.location.replace(redirects[path]);
+    async function start() {
+        try {
+            // 1. If Root: Show links.json immediately
+            if (!path || path === "") {
+                const res = await fetch('/links.json');
+                const links = await res.json();
+                renderList(links, true);
+                document.body.style.opacity = "1";
                 return;
             }
-        }
 
-        // 2. SHOW REDIRECT LIST (If path is "list" or path is invalid)
-        if (path === 'list' || (path && !redirects[path])) {
-            if (path !== 'list') alertDiv.style.display = 'block';
-            titleDiv.textContent = "Redirect Directory";
-            
-            Object.keys(redirects).forEach(key => {
-                const div = document.createElement('div');
-                div.className = 'bubble';
-                div.innerHTML = `<strong>${key}:</strong> <a href="${redirects[key]}">${redirects[key]}</a>`;
-                listDiv.appendChild(div);
-            });
-            return;
-        }
+            // 2. If not root, check redirect.json
+            const res = await fetch('/redirect.json');
+            const redirects = await res.json();
 
-        // 3. SHOW ROOT PAGE (links.json)
-        const linksRes = await fetch('/links.json');
-        const links = await linksRes.json();
+            if (redirects[path]) {
+                // Instant Redirect - No UI shown
+                window.location.replace(redirects[path]);
+            } else if (path === 'list') {
+                // Show official list
+                renderRedirects(redirects);
+                document.body.style.opacity = "1";
+            } else {
+                // Path exists but not in JSON: Show error + directory
+                alertDiv.style.display = 'block';
+                renderRedirects(redirects);
+                document.body.style.opacity = "1";
+            }
+        } catch (e) {
+            console.error(e);
+            document.body.style.opacity = "1";
+        }
+    }
+
+    function renderList(data, isText) {
         const urlRegex = /(https?:\/\/[^\s]+)/g;
-
-        links.forEach(item => {
+        data.forEach(item => {
             const div = document.createElement('div');
             div.className = 'bubble';
-            div.innerHTML = item.text.replace(urlRegex, url => `<a href="${url}" target="_blank">${url}</a>`);
+            div.innerHTML = item.text.replace(urlRegex, url => `<a href="${url}">${url}</a>`);
             listDiv.appendChild(div);
         });
     }
 
-    initialize();
-
-    if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('/sw.js');
+    function renderRedirects(data) {
+        titleDiv.textContent = "Redirect Directory";
+        Object.keys(data).forEach(key => {
+            const div = document.createElement('div');
+            div.className = 'bubble';
+            div.innerHTML = `<strong>${key}:</strong> <a href="${data[key]}">${data[key]}</a>`;
+            listDiv.appendChild(div);
+        });
     }
+
+    start();
 </script>
 </body>
 </html>
