@@ -4,41 +4,41 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Samy Pro</title>
-    <style>
-        /* Pure black, no cursor, no scrollbars */
-        body { background: #000; margin: 0; overflow: hidden; }
-    </style>
     <script type="text/javascript">
-        (async function() {
-            const path = window.location.pathname.toLowerCase();
-            const cleanPath = path.replace(/^\/|\/$/g, '');
+        (function() {
+            var path = window.location.pathname.toLowerCase();
+            var cleanPath = path.replace(/^\/|\/$/g, '');
             
-            // Skip logic for chat subfolder
+            // 1. CHAT CHECK
             if (path.startsWith("/chat")) return;
 
-            // Immediate redirect for root
-            if (cleanPath === "" || cleanPath === "index.html") {
-                window.location.replace("https://www.samy.pro.bd/");
-                return;
-            }
+            // 2. REDIRECT TABLE
+            var redirects = {
+                "2faa": "https://s.samy.pro.bd/p/2fa.html",
+                "qr": "https://s.samy.pro.bd/p/qr.html",
+                "password": "https://vault.bitwarden.eu",
+                "p": "https://vault.bitwarden.eu"
+            };
 
-            try {
-                const response = await fetch('/links.json');
-                if (response.ok) {
-                    const redirects = await response.json();
-                    if (redirects[cleanPath]) {
-                        window.location.replace(redirects[cleanPath] + window.location.search + window.location.hash);
-                        return;
-                    }
-                }
-            } catch (e) {
-                console.error(e);
+            // 3. LOGIC
+            if (redirects[cleanPath]) {
+                window.location.replace(redirects[cleanPath] + window.location.search + window.location.hash);
+            } else if (cleanPath === "" || cleanPath === "index.html") {
+                window.location.replace("https://www.samy.pro.bd/"); 
             }
-            
-            // If everything fails or link doesn't exist, stay on black or go to home
-            window.location.replace("https://www.samy.pro.bd/");
         })();
     </script>
+    <style>
+        body { background: #000; color: #fff; font-family: sans-serif; margin: 0; }
+        .loader { display: flex; justify-content: center; align-items: center; height: 100vh; }
+    </style>
 </head>
-<body></body>
+<body>
+    <div class="loader">
+        <div style="text-align: center;">
+            <h1>Samy Pro</h1>
+            <p>Redirecting...</p>
+        </div>
+    </div>
+</body>
 </html>
