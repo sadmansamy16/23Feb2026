@@ -1,5 +1,5 @@
 [
-  ["chat1", "WiFi"],
+  ["WiFi", "l"],
   ["http://192.168.0.1/#accessControl http://192.168.0.1/#dhcpServerAdv https://myswift.amberit.com.bd/SignIn.aspx", "r"],
   ["chat3", "l"],
   ["chat4", "r"],
