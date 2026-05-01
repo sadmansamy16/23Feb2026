@@ -1,26 +1,32 @@
-const CACHE_NAME = 'samy-dynamic-cache';
+const CACHE_NAME = 'samy-pwa-dynamic';
 
-self.addEventListener('install', (e) => {
-    self.skipWaiting();
+self.addEventListener('install', () => {
+    self.skipWaiting(); // Forces the new service worker to take over immediately
 });
 
-self.addEventListener('activate', (e) => {
-    e.waitUntil(clients.claim());
+self.addEventListener('activate', (event) => {
+    event.waitUntil(
+        caches.keys().then((cacheNames) => {
+            return Promise.all(
+                cacheNames.map((cache) => {
+                    if (cache !== CACHE_NAME) {
+                        return caches.delete(cache); // Deletes old caches automatically
+                    }
+                })
+            );
+        }).then(() => clients.claim())
+    );
 });
 
 self.addEventListener('fetch', (event) => {
     event.respondWith(
         fetch(event.request)
             .then((response) => {
-                // If network works, clone it to cache and return
                 return caches.open(CACHE_NAME).then((cache) => {
                     cache.put(event.request, response.clone());
                     return response;
                 });
             })
-            .catch(() => {
-                // If network fails (offline), use cache
-                return caches.match(event.request);
-            })
+            .catch(() => caches.match(event.request))
     );
 });
