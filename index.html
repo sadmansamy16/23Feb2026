@@ -5,29 +5,21 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Samy Pro</title>
     <style>
-        /* Minimalist Dark UI */
         body { background: #000; color: #fff; font-family: monospace; margin: 0; padding: 20px; }
         .container { max-width: 600px; margin: 0 auto; }
-        
-        /* Table Styles for /list */
         table { width: 100%; border-collapse: collapse; margin-top: 20px; display: none; }
         th { text-align: left; color: #444; font-size: 10px; padding: 10px; border-bottom: 1px solid #222; }
         td { padding: 12px 10px; border-bottom: 1px solid #111; font-size: 13px; word-break: break-all; }
-        
-        /* Link Styles */
-        a { color: #888; text-decoration: none; transition: 0.2s; }
+        a { color: #888; text-decoration: none; }
         a:hover { color: #fff; }
         .short { color: #fff; font-weight: bold; }
-        
-        /* Hidden Status */
         #status { text-align: center; margin-top: 45vh; color: #222; font-size: 12px; }
     </style>
 </head>
 <body>
 
     <div class="container">
-        <div id="status">Loading...</div>
-        
+        <div id="status">Syncing...</div>
         <table id="listTable">
             <thead>
                 <tr>
@@ -41,34 +33,32 @@
 
     <script>
         (async function() {
-            // Get the path (e.g., 'fthh' or 'list')
             const path = window.location.pathname.toLowerCase().replace(/^\/|\/$/g, '');
             const status = document.getElementById('status');
             const table = document.getElementById('listTable');
             const tbody = document.getElementById('listBody');
 
-            // 1. Protection for specific folders
             if (window.location.pathname.startsWith("/chat")) return;
 
-            // 2. Default Home Redirect
             if (path === "" || path === "index.html") {
                 window.location.replace("https://www.samy.pro.bd/");
                 return;
             }
 
             try {
-                // 3. Fetch Data (Added timestamp to bypass GitHub cache)
-                const response = await fetch('links.json?t=' + new Date().getTime());
-                if (!response.ok) throw new Error("JSON_MISSING");
+                // Using full URL to prevent path errors on GitHub Pages
+                const jsonUrl = window.location.origin + '/links.json?t=' + Date.now();
+                const response = await fetch(jsonUrl);
+                
+                if (!response.ok) throw new Error("Fetch failed");
                 
                 const redirects = await response.json();
 
-                // 4. Case: Public List View
                 if (path === "list") {
                     status.style.display = "none";
                     table.style.display = "table";
                     Object.keys(redirects).forEach(key => {
-                        if(key === "list") return; // Hide the 'list' entry itself
+                        if(key === "list") return;
                         const row = `<tr>
                             <td class="short">/${key}</td>
                             <td><a href="${redirects[key]}">${redirects[key]}</a></td>
@@ -78,17 +68,15 @@
                     return;
                 }
 
-                // 5. Case: Active Redirect
                 if (redirects[path]) {
                     window.location.replace(redirects[path] + window.location.search + window.location.hash);
                 } else {
-                    // Fallback to home if path is invalid
                     window.location.replace("https://www.samy.pro.bd/");
                 }
 
             } catch (err) {
-                status.innerText = "Error: File Connection Failed";
-                console.error("Redirect logic error:", err);
+                status.innerText = "Error: links.json not reachable";
+                console.error(err);
             }
         })();
     </script>
