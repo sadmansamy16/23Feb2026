@@ -92,7 +92,10 @@
 </div>
 
 <script>
-    const pathSegments = window.location.pathname.split('/').filter(p => p);
+    // Clean up the path by removing trailing slashes and splitting
+    const rawPath = window.location.pathname;
+    const pathSegments = rawPath.split('/').filter(p => p);
+    
     const listDiv = document.getElementById('content-list');
     const alertDiv = document.getElementById('not-found');
     const inputField = document.getElementById('shortcut-input');
@@ -115,6 +118,12 @@
     goButton.addEventListener('click', doRedirect);
 
     async function init() {
+        // Fix for trailing slash on physical files (e.g., /shorturl/ -> /shorturl)
+        if (rawPath.endsWith('/') && rawPath.length > 1 && pathSegments[0] !== 'l') {
+            window.location.replace(rawPath.slice(0, -1));
+            return;
+        }
+
         try {
             // CASE 1: HOMEPAGE
             if (pathSegments.length === 0) {
@@ -122,11 +131,12 @@
                 renderBubbles(await res.json());
             } 
             // CASE 2: SHORT URL (samy.pro.bd/l/xxxx)
-            else if (pathSegments[0] === 'l' && pathSegments[1]) {
+            else if (pathSegments[0].toLowerCase() === 'l' && pathSegments[1]) {
                 const res = await fetch('/shorturl.json');
                 const shorts = await res.json();
-                if (shorts[pathSegments[1]]) {
-                    window.location.replace(shorts[pathSegments[1]]);
+                const slug = pathSegments[1].toLowerCase();
+                if (shorts[slug]) {
+                    window.location.replace(shorts[slug]);
                     return;
                 }
                 showError();
@@ -135,7 +145,7 @@
             else {
                 const res = await fetch('/redirect.json');
                 const redirects = await res.json();
-                const key = pathSegments[0];
+                const key = pathSegments[0].toLowerCase();
                 if (redirects[key]) {
                     window.location.replace(redirects[key]);
                     return;
@@ -163,41 +173,4 @@
             
             if (linkMatches && linkMatches.length === 1) {
                 div.classList.add('fullclickable');
-                div.onclick = () => window.location.href = linkMatches[0];
-            }
-            div.innerHTML = content.replace(urlRegex, url => `<a href="${url}">${url}</a>`);
-            listDiv.appendChild(div);
-        });
-    }
-
-    function renderRedirects(data) {
-        document.getElementById('page-title').textContent = "Directory";
-        Object.keys(data).forEach(key => {
-            const div = document.createElement('div');
-            div.className = 'bubble fullclickable';
-            div.onclick = () => window.location.href = data[key];
-            div.innerHTML = `<strong>${key}</strong><br><small style="color:var(--link)">${data[key]}</small>`;
-            listDiv.appendChild(div);
-        });
-    }
-
-    init();
-
-    // Service Worker setup...
-    if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('/sw.js', { updateViaCache: 'none' })
-        .then(reg => {
-            reg.update();
-            reg.onupdatefound = () => {
-                const worker = reg.installing;
-                worker.onstatechange = () => {
-                    if (worker.state === 'installed' && navigator.serviceWorker.controller) {
-                        window.location.reload();
-                    }
-                };
-            };
-        });
-    }
-</script>
-</body>
-</html>
+                div.
