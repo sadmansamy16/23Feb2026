@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#0b57d0">
+    <title>SAMY.pro.bd</title>
+    <style>
+        :root {
+            --bg: #f8fafd;
+            --bubble-bg: #ffffff;
+            --text: #1f1f1f;
+            --link: #0b57d0;
+        }
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            font-family: 'Google Sans', Roboto, Arial, sans-serif;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            padding: 20px;
+        }
+        .container {
+            width: 100%;
+            max-width: 500px;
+            margin-top: 50px;
+        }
+        .bubble {
+            background: var(--bubble-bg);
+            padding: 16px 24px;
+            border-radius: 20px;
+            margin-bottom: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+            border: 1px solid #e3e3e3;
+            animation: fadeIn 0.5s ease;
+        }
+        .bubble a {
+            color: var(--link);
+            text-decoration: none;
+            font-weight: 500;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container" id="content-list">
+    </div>
+
+<script>
+    // 1. REDIRECT LOGIC
+    // This grabs 'm' or '2faa' from the end of the URL
+    const path = window.location.pathname.split('/').filter(p => p).pop();
+
+    fetch('/redirect.json')
+        .then(r => r.json())
+        .then(data => {
+            if (path && data[path]) {
+                // If it's a real URL, redirect. If it's just "PUBLIC_LIST", stay on page.
+                if (data[path].startsWith('http')) {
+                    window.location.replace(data[path]);
+                }
+            }
+            
+            // 2. DISPLAY LIST LOGIC (Root Page)
+            // If we are at root or just showing the list
+            const listContainer = document.getElementById('content-list');
+            Object.keys(data).forEach(key => {
+                const val = data[key];
+                const div = document.createElement('div');
+                div.className = 'bubble';
+                
+                if (val.startsWith('http')) {
+                    div.innerHTML = `<strong>${key}:</strong> <a href="${val}">${val}</a>`;
+                } else {
+                    div.innerHTML = `<strong>${key}:</strong> ${val}`;
+                }
+                listContainer.appendChild(div);
+            });
+        })
+        .catch(err => console.error("Data load error:", err));
+
+    // 3. PWA Registration
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/sw.js');
+    }
+</script>
+</body>
+</html>
