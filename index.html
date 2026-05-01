@@ -5,40 +5,60 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Samy Pro</title>
     <script type="text/javascript">
-        (function() {
-            var path = window.location.pathname.toLowerCase();
-            var cleanPath = path.replace(/^\/|\/$/g, '');
+        (async function() {
+            const path = window.location.pathname.toLowerCase();
+            const cleanPath = path.replace(/^\/|\/$/g, '');
             
-            // 1. CHAT CHECK
+            // 1. CHAT EXCEPTION
             if (path.startsWith("/chat")) return;
 
-            // 2. REDIRECT TABLE
-            var redirects = {
-                "2faa": "https://s.samy.pro.bd/p/2fa.html",
-                "qr": "https://s.samy.pro.bd/p/qr.html",
-                "password": "https://vault.bitwarden.eu",
-                "p": "https://vault.bitwarden.eu"
-            };
+            // 2. ROOT REDIRECT
+            if (cleanPath === "" || cleanPath === "index.html") {
+                window.location.replace("https://www.samy.pro.bd/");
+                return;
+            }
 
-            // 3. LOGIC
-            if (redirects[cleanPath]) {
-                window.location.replace(redirects[cleanPath] + window.location.search + window.location.hash);
-            } else if (cleanPath === "" || cleanPath === "index.html") {
-                window.location.replace("https://www.samy.pro.bd/"); 
+            try {
+                // 3. FETCH REDIRECT DATA
+                const response = await fetch('/links.json');
+                if (!response.ok) throw new Error("JSON not found");
+                
+                const redirects = await response.json();
+
+                // 4. EXECUTE REDIRECT
+                if (redirects[cleanPath]) {
+                    window.location.replace(redirects[cleanPath] + window.location.search + window.location.hash);
+                } else {
+                    // Fallback if the short-link doesn't exist in your JSON
+                    document.getElementById('status').innerText = "Link not found.";
+                }
+            } catch (err) {
+                console.error("Redirect Error:", err);
+                document.getElementById('status').innerText = "System error. Please try again later.";
             }
         })();
     </script>
     <style>
-        body { background: #000; color: #fff; font-family: sans-serif; margin: 0; }
-        .loader { display: flex; justify-content: center; align-items: center; height: 100vh; }
+        body { 
+            background: #000; 
+            color: #fff; 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
+            margin: 0; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            height: 100vh; 
+            overflow: hidden;
+        }
+        .container { text-align: center; }
+        h1 { font-weight: 300; letter-spacing: 2px; margin-bottom: 10px; }
+        p { color: #888; font-size: 0.9rem; }
     </style>
 </head>
 <body>
-    <div class="loader">
-        <div style="text-align: center;">
-            <h1>Samy Pro</h1>
-            <p>Redirecting...</p>
-        </div>
+    <div class="container">
+        <h1>Samy Pro</h1>
+        <p id="status">Redirecting...</p>
     </div>
 </body>
 </html>
