@@ -21,10 +21,18 @@
         let isFirstLoad = true; // Variable to control the initial view
 
         function linkify(text) {
-            const urlPattern = /(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/ig;
-            const wwwPattern = /(^|[^\/])(www\.[\S]+(\b|$))/gim;
-            return text.replace(urlPattern, '<a href="$1" target="_blank">$1</a>').replace(wwwPattern, '$1<a href="http://$2" target="_blank">$2</a>');
-        }
+    // NEW: Converts [Movie](https://site.com) into <a href="https://site.com">Movie</a>
+    const hiddenLinkPattern = /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g;
+    text = text.replace(hiddenLinkPattern, '<a href="$2" target="_blank">$1</a>');
+
+    const urlPattern = /(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/ig;
+    const wwwPattern = /(^|[^\/])(www\.[\S]+(\b|$))/gim;
+    
+    // MODIFIED: Only turns raw URLs into links if they aren't already part of a hidden link
+    return text.replace(urlPattern, (match) => text.includes('href="' + match) ? match : `<a href="${match}" target="_blank">${match}</a>`)
+               .replace(wwwPattern, '$1<a href="http://$2" target="_blank">$2</a>');
+}
+
 
         async function loadMessages() {
             try {
