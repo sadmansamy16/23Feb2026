@@ -16,7 +16,7 @@
         body {
             background-color: var(--bg);
             color: var(--text);
-            font-family: 'Segoe UI', system-ui, sans-serif;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
             margin: 0;
             display: flex;
             justify-content: center;
@@ -25,17 +25,17 @@
             transition: opacity 0.4s ease-out;
         }
         .container { width: 100%; max-width: 480px; margin-top: 5vh; }
-        .header { text-align: center; margin-bottom: 32px; font-weight: 800; font-size: 1.6rem; }
+        .header { text-align: center; margin-bottom: 32px; font-weight: 800; font-size: 1.6rem; letter-spacing: -0.5px; }
         .bubble {
             background: var(--bubble-bg);
             padding: 20px 24px;
             border-radius: 24px;
             margin-bottom: 16px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-            border: 1px solid rgba(0,0,0,0.03);
+            border: 1px solid rgba(0,0,0,0.02);
             word-break: break-all;
             line-height: 1.5;
-            font-weight: 700;
+            font-weight: 700; /* Extra bold text for modern look */
             transition: transform 0.1s ease;
         }
         .bubble.clickable { cursor: pointer; }
@@ -54,6 +54,7 @@
     </style>
 </head>
 <body>
+
 <div class="container">
     <div id="not-found" class="alert">Shortcut not found.</div>
     <div id="page-title" class="header">samy.pro.bd</div>
@@ -68,21 +69,29 @@
 
     async function init() {
         try {
+            // 1. ROOT LOAD - Now fetching homepage.json
             if (!path || path === "") {
-                const res = await fetch('/links.json');
-                renderBubbles(await res.json());
+                const res = await fetch('/homepage.json');
+                const data = await res.json();
+                renderBubbles(data);
             } else {
+                // 2. REDIRECT LOAD
                 const res = await fetch('/redirect.json');
                 const redirects = await res.json();
+                
                 if (redirects[path]) {
                     window.location.replace(redirects[path]);
                     return;
                 }
+                
                 alertDiv.style.display = 'block';
                 renderRedirects(redirects);
             }
             document.body.style.opacity = "1";
-        } catch (err) { document.body.style.opacity = "1"; }
+        } catch (err) { 
+            console.error(err);
+            document.body.style.opacity = "1"; 
+        }
     }
 
     function renderBubbles(data) {
@@ -90,11 +99,14 @@
             const div = document.createElement('div');
             div.className = 'bubble';
             const content = typeof item === 'string' ? item : item.text;
+            
+            // Auto-detect link for full-bubble click
             const linkMatch = content.match(urlRegex);
             if (linkMatch) {
                 div.classList.add('clickable');
                 div.onclick = () => window.location.href = linkMatch[0];
             }
+
             div.innerHTML = content.replace(urlRegex, url => `<a href="${url}">${url}</a>`);
             listDiv.appendChild(div);
         });
@@ -113,16 +125,15 @@
 
     init();
 
-    // STABLE REGISTRATION - NO INFINITE REFRESH
+    // STABLE SERVICE WORKER REGISTRATION
     if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('/sw.js', { 
             updateViaCache: 'none' 
         }).then(reg => {
-            reg.update(); // Checks for code changes on GitHub
+            reg.update();
             reg.onupdatefound = () => {
                 const worker = reg.installing;
                 worker.onstatechange = () => {
-                    // Only reloads once if a brand new worker is actually ready
                     if (worker.state === 'installed' && navigator.serviceWorker.controller) {
                         window.location.reload();
                     }
