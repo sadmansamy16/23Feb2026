@@ -12,12 +12,11 @@
             --bubble-bg: #ffffff;
             --text: #1a1c1e;
             --link: #0b57d0;
-            --shadow: 0 4px 12px rgba(0,0,0,0.05);
         }
         body {
             background-color: var(--bg);
             color: var(--text);
-            font-family: 'Segoe UI Variable', system-ui, -apple-system, sans-serif;
+            font-family: 'Segoe UI', system-ui, sans-serif;
             margin: 0;
             display: flex;
             justify-content: center;
@@ -25,42 +24,43 @@
             opacity: 0; 
             transition: opacity 0.4s ease-out;
         }
-        .container { width: 100%; max-width: 480px; margin-top: 10vh; }
+        .container { width: 100%; max-width: 480px; margin-top: 5vh; }
         .header { 
             text-align: center; 
             margin-bottom: 32px; 
-            font-weight: 700; 
-            font-size: 1.5rem; 
-            letter-spacing: -0.5px;
+            font-weight: 800; /* Extra bold */
+            font-size: 1.6rem; 
             color: var(--text); 
         }
         .bubble {
             background: var(--bubble-bg);
-            padding: 18px 24px;
+            padding: 20px 24px;
             border-radius: 24px;
             margin-bottom: 16px;
-            box-shadow: var(--shadow);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
             border: 1px solid rgba(0,0,0,0.03);
             word-break: break-all;
-            line-height: 1.6;
-            font-weight: 600; /* Bolder text */
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            line-height: 1.5;
+            font-weight: 700; /* Bold bubble text */
+            transition: transform 0.2s ease, background 0.2s ease;
+            cursor: default;
         }
-        /* Style for clickable bubbles */
+        /* Clickable State */
         .bubble.clickable {
             cursor: pointer;
         }
+        .bubble.clickable:hover {
+            background: #f8fafd;
+            transform: translateY(-2px);
+        }
         .bubble.clickable:active {
             transform: scale(0.98);
-            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
         }
         .bubble a { 
             color: var(--link); 
-            text-decoration: none; 
-            border-bottom: 2px solid transparent;
-            transition: border 0.2s;
+            text-decoration: none;
+            pointer-events: none; /* Let the bubble handle the click */
         }
-        .bubble a:hover { border-bottom: 2px solid var(--link); }
         .alert {
             color: #ba1a1a;
             background: #ffdad6;
@@ -89,6 +89,7 @@
 
     async function init() {
         try {
+            // 1. ROOT LOAD
             if (!path || path === "") {
                 const res = await fetch('/links.json');
                 const links = await res.json();
@@ -96,6 +97,8 @@
                 showPage();
                 return;
             }
+
+            // 2. REDIRECT LOAD
             const res = await fetch('/redirect.json');
             const redirects = await res.json();
 
@@ -113,16 +116,13 @@
         data.forEach(item => {
             const div = document.createElement('div');
             div.className = 'bubble';
-            let content = typeof item === 'string' ? item : item.text;
-
-            // Handle [fullclick] tag
-            if (content.includes('[fullclick]')) {
-                const linkMatch = content.match(urlRegex);
-                content = content.replace('[fullclick]', '').trim();
-                if (linkMatch) {
-                    div.classList.add('clickable');
-                    div.onclick = () => window.location.href = linkMatch[0];
-                }
+            const content = typeof item === 'string' ? item : item.text;
+            
+            // Auto-detect link for full-bubble click
+            const linkMatch = content.match(urlRegex);
+            if (linkMatch) {
+                div.classList.add('clickable');
+                div.onclick = () => window.location.href = linkMatch[0];
             }
 
             div.innerHTML = content.replace(urlRegex, url => `<a href="${url}">${url}</a>`);
@@ -134,9 +134,9 @@
         document.getElementById('page-title').textContent = "Directory";
         Object.keys(data).forEach(key => {
             const div = document.createElement('div');
-            div.className = 'bubble clickable'; // Redirects are always fullclick
+            div.className = 'bubble clickable';
             div.onclick = () => window.location.href = data[key];
-            div.innerHTML = `<strong>${key}</strong><br><small style="color:var(--link); opacity:0.8">${data[key]}</small>`;
+            div.innerHTML = `<strong>${key}</strong><br><span style="font-size:0.85rem; color:var(--link); opacity:0.7">${data[key]}</span>`;
             listDiv.appendChild(div);
         });
     }
