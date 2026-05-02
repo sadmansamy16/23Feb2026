@@ -5,18 +5,24 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Authenticator</title>
     
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=photo_camera,upload_file" />
+    
     <script src="https://cdn.jsdelivr.net/npm/otpauth@9.1.2/dist/otpauth.umd.min.js"></script>
     <script src="https://unpkg.com/html5-qrcode"></script>
 
     <style>
         html, body {
             margin: 0; padding: 0; width: 100%; height: 100%;
-            background-color: #e5e5ea; /* iOS Grey Background for contrast */
+            background-color: #e5e5ea;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             display: flex; justify-content: center; align-items: center;
-            /* CRITICAL: Allows native swipe-to-refresh */
             overscroll-behavior-y: auto; 
             touch-action: auto; 
+        }
+
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            font-size: 20px;
         }
 
         .app-shell {
@@ -30,7 +36,7 @@
         .card {
             background: #ffffff;
             border-radius: 30px;
-            box-shadow: 0 15px 45px rgba(0, 0, 0, 0.15); /* Deep shadow to separate from bg */
+            box-shadow: 0 15px 45px rgba(0, 0, 0, 0.1);
             padding: 30px 24px;
             text-align: center;
             width: 100%;
@@ -50,16 +56,19 @@
             flex: 1; background: #f2f2f7; border: 1px solid #d1d1d6;
             border-radius: 14px; padding: 12px; font-size: 14px; font-weight: 600;
             display: flex; align-items: center; justify-content: center; gap: 8px;
-            color: #1c1c1e; cursor: pointer;
+            color: #1c1c1e; cursor: pointer; transition: background 0.2s;
         }
+        .btn-secondary:active { background: #e5e5ea; }
 
         #reader { width: 100%; border-radius: 20px; overflow: hidden; display: none; margin-bottom: 10px; }
 
         .input-field {
             width: 100%; background: #f9f9f9; border: 1.5px solid #e5e5ea;
-            border-radius: 14px; padding: 16px; font-family: monospace;
+            border-radius: 14px; padding: 16px; font-family: 'SF Mono', SFMono-Regular, ui-monospace, monospace;
             font-size: 16px; text-align: center; outline: none; box-sizing: border-box;
+            transition: border-color 0.2s;
         }
+        .input-field:focus { border-color: #007aff; }
 
         .code-box {
             background: #f2f2f7; 
@@ -80,9 +89,10 @@
         .btn-primary {
             width: 100%; background: #007aff; color: white; border: none;
             border-radius: 14px; padding: 16px; font-size: 16px; font-weight: 600;
-            box-shadow: 0 8px 20px rgba(0, 122, 255, 0.25);
-            cursor: pointer;
+            box-shadow: 0 8px 20px rgba(0, 122, 255, 0.2);
+            cursor: pointer; transition: transform 0.1s, background 0.2s;
         }
+        .btn-primary:active { transform: scale(0.98); background: #0063d1; }
 
         .footer-info { display: flex; justify-content: space-between; align-items: flex-end; padding: 5px; }
         .next-up-box { text-align: left; }
@@ -92,19 +102,25 @@
             align-items: center; 
             gap: 8px; 
             cursor: pointer;
+            padding: 4px 0;
         }
 
         #nextCode { font-size: 16px; font-weight: 600; color: #1c1c1e; }
         
-        /* Copy Icon Styling */
         .copy-icon {
-            width: 18px; height: 18px; fill: #007aff; opacity: 0.8;
+            width: 18px; height: 18px; fill: #007aff; opacity: 0.6;
+            transition: opacity 0.2s, transform 0.2s;
         }
 
         .timer-container { min-width: 90px; text-align: right; }
         #timerText { font-size: 12px; font-weight: 700; color: #007aff; }
         .progress-bg { background: #d1d1d6; height: 6px; border-radius: 10px; margin-top: 6px; overflow: hidden; }
-        #progressBar { background: #007aff; height: 100%; width: 100%; transition: width 1s linear; }
+        #progressBar { 
+            background: #007aff; 
+            height: 100%; 
+            width: 100%; 
+            transition: width 1s linear, background-color 0.3s; 
+        }
     </style>
 </head>
 <body>
@@ -115,22 +131,26 @@
         <p>Scan QR or enter secret key</p>
 
         <div class="action-row">
-            <button class="btn-secondary" id="startCamBtn" onclick="startCamera()">📷 Camera</button>
-            <button class="btn-secondary" id="stopCamBtn" onclick="stopCamera()" style="display:none; color:#ff3b30; border-color:#ff3b30;">✕ Close</button>
+            <button class="btn-secondary" id="startCamBtn" onclick="startCamera()">
+                <span class="material-symbols-outlined">photo_camera</span> Camera
+            </button>
+            <button class="btn-secondary" id="stopCamBtn" onclick="stopCamera()" style="display:none; color:#ff3b30; border-color:#ff3b30;">
+                <span class="material-symbols-outlined">close</span> Close
+            </button>
             <label class="btn-secondary">
-                🖼️ File
+                <span class="material-symbols-outlined">upload_file</span> File
                 <input type="file" accept="image/*" id="qr-input" onchange="scanFile(this)" style="display: none;">
             </label>
         </div>
 
         <div id="reader"></div>
 
-        <input type="text" id="secretInput" class="input-field" placeholder="Enter Secret Key">
+        <input type="text" id="secretInput" class="input-field" placeholder="Enter Secret Key" spellcheck="false">
 
         <div class="code-box">
             <span class="label-tiny">Current Code</span>
             <div id="currentCode">------</div>
-            <button class="btn-primary" onclick="copyCode('currentCode')">Copy Code</button>
+            <button class="btn-primary" id="copyBtn" onclick="copyCode('currentCode')">Copy Code</button>
         </div>
 
         <div class="footer-info">
@@ -155,35 +175,54 @@
     const nextDisplay = document.getElementById('nextCode');
     const timerText = document.getElementById('timerText');
     const progressBar = document.getElementById('progressBar');
+    const copyBtn = document.getElementById('copyBtn');
     const html5QrCode = new Html5Qrcode("reader");
 
-    function startCamera() {
+    async function startCamera() {
         document.getElementById('reader').style.display = 'block';
         document.getElementById('startCamBtn').style.display = 'none';
         document.getElementById('stopCamBtn').style.display = 'flex';
-        html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, (text) => {
-            processInput(text);
+        
+        try {
+            await html5QrCode.start(
+                { facingMode: "environment" }, 
+                { fps: 10, qrbox: 250 }, 
+                (text) => {
+                    processInput(text);
+                    stopCamera();
+                }
+            );
+        } catch (err) {
+            alert("Camera access denied or error occurred.");
             stopCamera();
-        }).catch(() => alert("Camera error"));
+        }
     }
 
     function stopCamera() {
-        html5QrCode.stop().then(() => {
+        if (html5QrCode.isScanning) {
+            html5QrCode.stop().then(() => {
+                document.getElementById('reader').style.display = 'none';
+                document.getElementById('startCamBtn').style.display = 'flex';
+                document.getElementById('stopCamBtn').style.display = 'none';
+            });
+        } else {
             document.getElementById('reader').style.display = 'none';
             document.getElementById('startCamBtn').style.display = 'flex';
             document.getElementById('stopCamBtn').style.display = 'none';
-        });
+        }
     }
 
     function scanFile(input) {
         if (input.files[0]) {
-            html5QrCode.scanFile(input.files[0], true).then(text => processInput(text))
-            .catch(() => alert("QR not detected"));
+            html5QrCode.scanFile(input.files[0], true)
+                .then(text => processInput(text))
+                .catch(() => alert("No QR code found in this image."));
         }
     }
 
     function processInput(data) {
         let secret = data;
+        // Basic parser for otpauth:// links
         if (data.includes('secret=')) {
             try {
                 const url = new URL(data);
@@ -211,29 +250,52 @@
                 digits: 6,
                 period: 30
             });
-            const timeLeft = 30 - (Math.floor(Date.now() / 1000) % 30);
+
+            const now = Date.now();
+            const timeLeft = 30 - (Math.floor(now / 1000) % 30);
+            
             currentDisplay.innerText = totp.generate();
-            nextDisplay.innerText = totp.generate({ timestamp: Date.now() + 30000 });
+            // Get code for next period
+            nextDisplay.innerText = totp.generate({ timestamp: now + 30000 });
+            
             timerText.innerText = timeLeft + "s";
             progressBar.style.width = (timeLeft / 30 * 100) + "%";
+            
             const color = timeLeft <= 5 ? "#ff3b30" : "#007aff";
-            progressBar.style.background = color; 
+            progressBar.style.backgroundColor = color; 
             timerText.style.color = color;
         } catch (e) {
             currentDisplay.innerText = "INVALID";
+            nextDisplay.innerText = "------";
         }
     }
 
-    function copyCode(id) {
+    async function copyCode(id) {
         const val = document.getElementById(id).innerText;
         if(val.includes('-') || val === "INVALID") return;
-        navigator.clipboard.writeText(val);
-        // Visual feedback for the icon area if copying next code
-        if (id === 'nextCode') {
-            const icon = document.querySelector('.copy-icon');
-            icon.style.opacity = '1';
-            icon.style.transform = 'scale(1.2)';
-            setTimeout(() => { icon.style.opacity = '0.8'; icon.style.transform = 'scale(1)'; }, 500);
+        
+        try {
+            await navigator.clipboard.writeText(val);
+            
+            if (id === 'currentCode') {
+                const originalText = copyBtn.innerText;
+                copyBtn.innerText = "✓ Copied";
+                copyBtn.style.background = "#34c759";
+                setTimeout(() => {
+                    copyBtn.innerText = originalText;
+                    copyBtn.style.background = "#007aff";
+                }, 1500);
+            } else {
+                const icon = document.querySelector('.copy-icon');
+                icon.style.opacity = '1';
+                icon.style.transform = 'scale(1.3)';
+                setTimeout(() => {
+                    icon.style.opacity = '0.6';
+                    icon.style.transform = 'scale(1)';
+                }, 500);
+            }
+        } catch (err) {
+            console.error("Copy failed", err);
         }
     }
 
