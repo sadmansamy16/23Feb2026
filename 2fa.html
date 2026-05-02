@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Authenticator</title>
     
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&icon_names=photo_camera,upload_file,close" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
     
     <script src="https://cdn.jsdelivr.net/npm/otpauth@9.1.2/dist/otpauth.umd.min.js"></script>
     <script src="https://unpkg.com/html5-qrcode"></script>
@@ -19,9 +19,20 @@
             overscroll-behavior-y: auto; touch-action: auto; 
         }
 
+        /* Essential for Google Icons to work */
         .material-symbols-outlined {
-            font-size: 22px;
-            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            font-family: 'Material Symbols Outlined';
+            font-weight: normal;
+            font-style: normal;
+            font-size: 24px;
+            line-height: 1;
+            letter-spacing: normal;
+            text-transform: none;
+            display: inline-block;
+            white-space: nowrap;
+            word-wrap: normal;
+            direction: ltr;
+            -webkit-font-smoothing: antialiased;
         }
 
         .app-shell { width: 100%; padding: 20px; display: flex; justify-content: center; box-sizing: border-box; }
@@ -35,12 +46,14 @@
         h2 { font-size: 24px; font-weight: 700; margin: 0; color: #1c1c1e; }
         p { font-size: 14px; color: #8e8e93; margin: -5px 0 10px 0; }
 
-        .action-row { display: flex; gap: 12px; }
+        /* Fix for buttons overlapping or going out of bounds */
+        .action-row { display: flex; gap: 10px; width: 100%; }
 
         .btn-secondary {
             flex: 1; background: #f2f2f7; border: 1px solid #d1d1d6; border-radius: 14px;
-            padding: 12px; font-size: 14px; font-weight: 600; display: flex;
-            align-items: center; justify-content: center; gap: 8px; color: #1c1c1e; cursor: pointer;
+            padding: 10px 5px; font-size: 13px; font-weight: 600; display: flex;
+            align-items: center; justify-content: center; gap: 5px; color: #1c1c1e; cursor: pointer;
+            min-width: 0; /* Prevents overflow */
         }
 
         #reader { width: 100%; border-radius: 20px; overflow: hidden; display: none; margin-bottom: 10px; }
@@ -51,9 +64,7 @@
         }
 
         .code-box { background: #f2f2f7; border-radius: 24px; padding: 25px 15px; display: flex; flex-direction: column; align-items: center; }
-        
         .label-tiny { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px; color: #8e8e93; margin-bottom: 12px; }
-        
         #currentCode { font-size: 44px; font-weight: 800; color: #007aff; letter-spacing: 5px; margin-bottom: 20px; font-variant-numeric: tabular-nums; }
         
         .btn-primary {
@@ -62,19 +73,12 @@
         }
 
         .footer-info { display: flex; justify-content: space-between; align-items: flex-end; padding: 5px; }
-        
         .next-up-row { display: flex; align-items: center; gap: 8px; cursor: pointer; }
-        
         #nextCode { font-size: 16px; font-weight: 600; color: #1c1c1e; }
-        
         .copy-icon { width: 18px; height: 18px; fill: #007aff; opacity: 0.8; }
-        
         .timer-container { min-width: 90px; text-align: right; }
-        
         #timerText { font-size: 12px; font-weight: 700; color: #007aff; }
-        
         .progress-bg { background: #d1d1d6; height: 6px; border-radius: 10px; margin-top: 6px; overflow: hidden; }
-        
         #progressBar { background: #007aff; height: 100%; width: 100%; transition: width 1s linear; }
     </style>
 </head>
@@ -87,15 +91,15 @@
         
         <div class="action-row">
             <button class="btn-secondary" id="startCamBtn" onclick="startCamera()">
-                <span class="material-symbols-outlined">photo_camera</span> Camera
+                <span class="material-symbols-outlined">photo_camera</span> <span>Camera</span>
             </button>
             
             <button class="btn-secondary" id="stopCamBtn" onclick="stopCamera()" style="display:none; color:#ff3b30; border-color:#ff3b30;">
-                <span class="material-symbols-outlined">close</span> Close
+                <span class="material-symbols-outlined">close</span> <span>Close</span>
             </button>
 
             <label class="btn-secondary">
-                <span class="material-symbols-outlined">upload_file</span> File
+                <span class="material-symbols-outlined">upload_file</span> <span>File</span>
                 <input type="file" accept="image/*" id="qr-input" onchange="scanFile(this)" style="display: none;">
             </label>
         </div>
@@ -127,6 +131,7 @@
 </div>
 
 <script>
+    // [Keep your existing JavaScript logic here - it is working fine]
     const secretInput = document.getElementById('secretInput');
     const currentDisplay = document.getElementById('currentCode');
     const nextDisplay = document.getElementById('nextCode');
