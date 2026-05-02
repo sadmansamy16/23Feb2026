@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Authenticator</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/otpauth@9.1.2/dist/otpauth.umd.min.js"></script>
+
+    <style>
+        html, body {
+            margin: 0; padding: 0; width: 100%; height: 100%;
+            background-color: #f2f2f7;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            display: flex; justify-content: center; align-items: center;
+        }
+        .app-shell { width: 100%; padding: 20px; display: flex; justify-content: center; box-sizing: border-box; }
+        .card {
+            background: #ffffff; border-radius: 30px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            padding: 30px 24px; text-align: center; width: 100%; max-width: 360px;
+            box-sizing: border-box; display: flex; flex-direction: column; gap: 20px;
+        }
+        h2 { font-size: 22px; font-weight: 700; margin: 0; color: #1c1c1e; letter-spacing: -0.5px; }
+        
+        /* The Code Display Area */
+        .code-container {
+            background: #f2f2f7; border-radius: 24px; padding: 30px 10px;
+            display: flex; flex-direction: column; align-items: center; transition: all 0.3s ease;
+        }
+        .label { font-size: 11px; font-weight: 700; text-transform: uppercase; color: #8e8e93; letter-spacing: 1px; margin-bottom: 10px; }
+        #currentCode { font-size: 48px; font-weight: 800; color: #007aff; letter-spacing: 4px; font-variant-numeric: tabular-nums; }
+        
+        .btn-copy {
+            width: 100%; background: #007aff; color: white; border: none; border-radius: 16px;
+            padding: 16px; font-size: 16px; font-weight: 600; cursor: pointer; margin-top: 10px;
+            transition: transform 0.1s active;
+        }
+        .btn-copy:active { transform: scale(0.98); opacity: 0.9; }
+
+        /* Timer & Footer */
+        .footer { display: flex; justify-content: space-between; align-items: center; padding: 0 5px; }
+        .next-box { text-align: left; }
+        #nextCode { font-size: 15px; font-weight: 600; color: #1c1c1e; }
+        
+        .timer-wrap { width: 80px; text-align: right; }
+        #timerText { font-size: 12px; font-weight: 700; color: #007aff; }
+        .progress-track { background: #e5e5ea; height: 4px; border-radius: 10px; margin-top: 4px; overflow: hidden; }
+        #progressBar { background: #007aff; height: 100%; width: 100%; transition: width 1s linear; }
+
+        /* Error/Empty State */
+        .waiting { color: #ff3b30; font-weight: 600; font-size: 14px; }
+    </style>
+</head>
+<body>
+
+<div class="app-shell">
+    <div class="card" id="mainCard">
+        <h2>Authenticator</h2>
+        
+        <div class="code-container">
+            <span class="label" id="statusLabel">Current Code</span>
+            <div id="currentCode">------</div>
+            <button class="btn-copy" onclick="copyCode()">Copy Code</button>
+        </div>
+
+        <div class="footer">
+            <div class="next-box">
+                <span class="label">Next Up</span>
+                <div id="nextCode">------</div>
+            </div>
+            <div class="timer-wrap">
+                <span id="timerText">30s</span>
+                <div class="progress-track"><div id="progressBar"></div></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let ACTIVE_SECRET = "";
+
+    function getSecretFromURL() {
+        const url = window.location.href;
+        let secret = "";
+
+        // Checks for ?ABCDEF or ?secret=ABCDEF or /2fa/ABCDEF
+        if (url.includes('?')) {
+            const partAfterQ = url.substring(url.lastIndexOf('?') + 1);
+            secret = partAfterQ.includes('=') ? partAfterQ.split('=')[1] : partAfterQ;
+        } else if (url.includes('/2fa/')) {
+            secret = url.split('/2fa/')[1];
+        }
+
+        if (secret && secret.length > 4) {
+            ACTIVE_SECRET = decodeURIComponent(secret).toUpperCase().replace(/\s/g, '');
+            // Clean up secret from any trailing URL junk
+            ACTIVE_SECRET = ACTIVE_SECRET.split('&')[0].split('/')[0].split('#')[0];
+            return true;
+        }
+        return false;
+    }
+
+    function updateTOTP() {
+        if (!ACTIVE_SECRET) {
+            document.getElementById('currentCode').innerHTML = '<span class="waiting">No Secret Found</span>';
+            document.getElementById('statusLabel').innerText = "Status";
+            return;
+        }
+
+        try {
+            const totp = new OTPAuth.TOTP({
+                secret: OTPAuth.Secret.fromBase32(ACTIVE_SECRET),
+                digits: 6,
+                period: 30
+            });
+
+            const seconds = Math.floor(Date.now() / 1000) % 30;
+            const timeLeft = 30 - seconds;
+            
+            document.getElementById('currentCode').innerText = totp.generate();
+            document.getElementById('nextCode').innerText = totp.generate({ timestamp: Date.now() + 30000 });
+            
+            // Timer Updates
+            document.getElementById('timerText').innerText = timeLeft + "s";
+            document.getElementById('progressBar').style.width = (timeLeft / 30 * 100) + "%";
+            
+            // Red alert for last 5 seconds
+            const color = timeLeft <= 5 ? "#ff3b30" : "#007aff";
+            document.getElementById('progressBar').style.background = color;
+            document.getElementById('timerText').style.color = color;
+
+        } catch (e) {
+            document.getElementById('currentCode').innerText = "ERROR";
+            console.error("TOTP Error:", e);
+        }
+    }
+
+    function copyCode() {
+        const code = document.getElementById('currentCode').innerText;
+        if (code !== "------" && code !== "ERROR" && !code.includes("No")) {
+            navigator.clipboard.writeText(code);
+            const btn = document.querySelector('.btn-copy');
+            btn.innerText = "Copied!";
+            btn.style.background = "#34c759";
+            setTimeout(() => {
+                btn.innerText = "Copy Code";
+                btn.style.background = "#007aff";
+            }, 1000);
+        }
+    }
+
+    // Run immediately on load
+    window.onload = () => {
+        getSecretFromURL();
+        updateTOTP();
+        setInterval(updateTOTP, 1000);
+    };
+</script>
+</body>
+</html>
