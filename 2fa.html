@@ -19,7 +19,7 @@
             overscroll-behavior-y: auto; touch-action: auto; 
         }
 
-        /* Material Icons fix for Chrome/Mobile */
+        /* Essential for Material Symbols rendering */
         .material-symbols-outlined {
             font-family: 'Material Symbols Outlined';
             font-weight: normal;
@@ -46,11 +46,12 @@
         h2 { font-size: 24px; font-weight: 700; margin: 0; color: #1c1c1e; }
         p { font-size: 14px; color: #8e8e93; margin: -5px 0 10px 0; }
 
+        /* Responsive Action Buttons */
         .action-row { display: flex; gap: 10px; width: 100%; }
 
         .btn-secondary {
             flex: 1; background: #f2f2f7; border: 1px solid #d1d1d6; border-radius: 14px;
-            padding: 12px 8px; font-size: 14px; font-weight: 600; display: flex;
+            padding: 12px 5px; font-size: 13px; font-weight: 600; display: flex;
             align-items: center; justify-content: center; gap: 6px; color: #1c1c1e; cursor: pointer;
             min-width: 0;
         }
@@ -75,6 +76,7 @@
         .next-up-row { display: flex; align-items: center; gap: 8px; cursor: pointer; }
         #nextCode { font-size: 16px; font-weight: 600; color: #1c1c1e; }
         .copy-icon { width: 18px; height: 18px; fill: #007aff; opacity: 0.8; }
+        
         .timer-container { min-width: 90px; text-align: right; }
         #timerText { font-size: 12px; font-weight: 700; color: #007aff; }
         .progress-bg { background: #d1d1d6; height: 6px; border-radius: 10px; margin-top: 6px; overflow: hidden; }
@@ -90,18 +92,15 @@
         
         <div class="action-row">
             <button class="btn-secondary" id="startCamBtn" onclick="startCamera()">
-                <span class="material-symbols-outlined">photo_camera</span>
-                <span>Camera</span>
+                <span class="material-symbols-outlined">photo_camera</span> <span>Camera</span>
             </button>
             
             <button class="btn-secondary" id="stopCamBtn" onclick="stopCamera()" style="display:none; color:#ff3b30; border-color:#ff3b30;">
-                <span class="material-symbols-outlined">close</span>
-                <span>Close</span>
+                <span class="material-symbols-outlined">close</span> <span>Close</span>
             </button>
 
             <label class="btn-secondary">
-                <span class="material-symbols-outlined">upload_file</span>
-                <span>File</span>
+                <span class="material-symbols-outlined">upload_file</span> <span>File</span>
                 <input type="file" accept="image/*" id="qr-input" onchange="scanFile(this)" style="display: none;">
             </label>
         </div>
@@ -140,24 +139,25 @@
     const progressBar = document.getElementById('progressBar');
     const html5QrCode = new Html5Qrcode("reader");
 
-    // FIXED: Auto-fill logic for ?heekshdb
+    // SMARTER URL PARSING
     function checkUrlForSecret() {
-        let query = window.location.search;
-        if (query && query.length > 1) {
-            query = query.substring(1); // Remove the '?'
-            
-            // If it's a full URL-encoded string, decode it
-            let decoded = decodeURIComponent(query);
-            
-            if (decoded.includes('secret=')) {
-                processInput(decoded);
-            } else {
-                // Take whatever is after the ? and set it as secret
-                // This handles ?heekshdb
-                secretInput.value = decoded.split('=')[1] || decoded;
-                secretInput.value = secretInput.value.toUpperCase().replace(/\s/g, '');
-                updateTOTP();
-            }
+        const search = window.location.search;
+        const path = window.location.pathname;
+
+        let finalSecret = "";
+
+        // Case 1: ?SECRET or ?secret=SECRET
+        if (search && search.length > 1) {
+            const params = new URLSearchParams(search);
+            finalSecret = params.get('secret') || search.substring(1);
+        } 
+        // Case 2: /2fa/SECRET (Handles potential redirection issues)
+        else if (path.includes('/2fa/')) {
+            finalSecret = path.split('/2fa/')[1];
+        }
+
+        if (finalSecret) {
+            processInput(decodeURIComponent(finalSecret));
         }
     }
 
