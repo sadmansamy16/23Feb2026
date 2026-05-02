@@ -19,18 +19,18 @@
             overscroll-behavior-y: auto; touch-action: auto; 
         }
 
-        /* Essential for Google Icons to work */
+        /* Material Icons fix for Chrome/Mobile */
         .material-symbols-outlined {
             font-family: 'Material Symbols Outlined';
             font-weight: normal;
             font-style: normal;
             font-size: 24px;
-            line-height: 1;
-            letter-spacing: normal;
-            text-transform: none;
             display: inline-block;
-            white-space: nowrap;
+            line-height: 1;
+            text-transform: none;
+            letter-spacing: normal;
             word-wrap: normal;
+            white-space: nowrap;
             direction: ltr;
             -webkit-font-smoothing: antialiased;
         }
@@ -46,14 +46,13 @@
         h2 { font-size: 24px; font-weight: 700; margin: 0; color: #1c1c1e; }
         p { font-size: 14px; color: #8e8e93; margin: -5px 0 10px 0; }
 
-        /* Fix for buttons overlapping or going out of bounds */
         .action-row { display: flex; gap: 10px; width: 100%; }
 
         .btn-secondary {
             flex: 1; background: #f2f2f7; border: 1px solid #d1d1d6; border-radius: 14px;
-            padding: 10px 5px; font-size: 13px; font-weight: 600; display: flex;
-            align-items: center; justify-content: center; gap: 5px; color: #1c1c1e; cursor: pointer;
-            min-width: 0; /* Prevents overflow */
+            padding: 12px 8px; font-size: 14px; font-weight: 600; display: flex;
+            align-items: center; justify-content: center; gap: 6px; color: #1c1c1e; cursor: pointer;
+            min-width: 0;
         }
 
         #reader { width: 100%; border-radius: 20px; overflow: hidden; display: none; margin-bottom: 10px; }
@@ -91,15 +90,18 @@
         
         <div class="action-row">
             <button class="btn-secondary" id="startCamBtn" onclick="startCamera()">
-                <span class="material-symbols-outlined">photo_camera</span> <span>Camera</span>
+                <span class="material-symbols-outlined">photo_camera</span>
+                <span>Camera</span>
             </button>
             
             <button class="btn-secondary" id="stopCamBtn" onclick="stopCamera()" style="display:none; color:#ff3b30; border-color:#ff3b30;">
-                <span class="material-symbols-outlined">close</span> <span>Close</span>
+                <span class="material-symbols-outlined">close</span>
+                <span>Close</span>
             </button>
 
             <label class="btn-secondary">
-                <span class="material-symbols-outlined">upload_file</span> <span>File</span>
+                <span class="material-symbols-outlined">upload_file</span>
+                <span>File</span>
                 <input type="file" accept="image/*" id="qr-input" onchange="scanFile(this)" style="display: none;">
             </label>
         </div>
@@ -131,7 +133,6 @@
 </div>
 
 <script>
-    // [Keep your existing JavaScript logic here - it is working fine]
     const secretInput = document.getElementById('secretInput');
     const currentDisplay = document.getElementById('currentCode');
     const nextDisplay = document.getElementById('nextCode');
@@ -139,14 +140,22 @@
     const progressBar = document.getElementById('progressBar');
     const html5QrCode = new Html5Qrcode("reader");
 
+    // FIXED: Auto-fill logic for ?heekshdb
     function checkUrlForSecret() {
-        const query = window.location.search.substring(1); 
-        if (query && query.length > 3) {
-            const decodedQuery = decodeURIComponent(query);
-            if (decodedQuery.includes('secret=')) {
-                processInput(decodedQuery);
+        let query = window.location.search;
+        if (query && query.length > 1) {
+            query = query.substring(1); // Remove the '?'
+            
+            // If it's a full URL-encoded string, decode it
+            let decoded = decodeURIComponent(query);
+            
+            if (decoded.includes('secret=')) {
+                processInput(decoded);
             } else {
-                secretInput.value = decodedQuery.toUpperCase().replace(/\s/g, '');
+                // Take whatever is after the ? and set it as secret
+                // This handles ?heekshdb
+                secretInput.value = decoded.split('=')[1] || decoded;
+                secretInput.value = secretInput.value.toUpperCase().replace(/\s/g, '');
                 updateTOTP();
             }
         }
