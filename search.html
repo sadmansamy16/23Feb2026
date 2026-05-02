@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Samy Search</title>
+    <style>
+        * { box-sizing: border-box; }
+        
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            height: 100vh; 
+            margin: 0; 
+            background-color: #f5f5f7; 
+        }
+
+        .container { 
+            width: 90%; 
+            max-width: 400px; 
+            text-align: center; 
+            padding: 20px;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        h2 { color: #333; margin-bottom: 20px; font-size: 1.5rem; }
+
+        input { 
+            width: 100%; 
+            padding: 15px; 
+            font-size: 16px; 
+            border: 2px solid #e0e0e0; 
+            border-radius: 12px; 
+            outline: none;
+            transition: border-color 0.3s;
+            margin-bottom: 15px;
+        }
+
+        input:focus { border-color: #007bff; }
+
+        button { 
+            width: 100%; 
+            padding: 15px; 
+            font-size: 18px; 
+            font-weight: bold;
+            cursor: pointer; 
+            background: #007bff; 
+            color: white; 
+            border: none; 
+            border-radius: 12px; 
+            transition: background 0.2s;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        button:active { background: #0056b3; transform: scale(0.98); }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Samy Search</h2>
+    <input type="text" id="urlInput" placeholder="Search Google or enter URL" inputmode="search">
+    <button onclick="navigateToSite()">Go Now</button>
+</div>
+
+<script>
+    function navigateToSite() {
+        const input = document.getElementById('urlInput').value.trim();
+        if (!input) return;
+
+        // Regex to check if it's a domain (e.g., site.com) or an IP address
+        const urlPattern = /^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([\/\w .-]*)*\/?$/i;
+
+        if (urlPattern.test(input)) {
+            // If it looks like a URL, go to the website
+            let url = input;
+            if (!/^https?:\/\//i.test(url)) {
+                url = 'https://' + url;
+            }
+            window.location.href = url;
+        } else {
+            // If it's a word or sentence, redirect to Google Search
+            window.location.href = "https://www.google.com/search?q=" + encodeURIComponent(input);
+        }
+    }
+
+    // Handle the "Enter" key
+    document.getElementById('urlInput').addEventListener("keypress", (e) => {
+        if (e.key === "Enter") navigateToSite();
+    });
+</script>
+
+</body>
+</html>
