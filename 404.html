@@ -117,20 +117,17 @@
     goButton.addEventListener('click', doRedirect);
 
     async function init() {
-        // --- 100% SAFE 2FA REDIRECTION LOGIC ---
+        // --- 2FA REDIRECTION LOGIC ---
         if (pathSegments.length > 0 && pathSegments[0].toLowerCase() === '2fa') {
-            // Check if there is already a safe hash (#)
-            const existingHash = window.location.hash;
+            // Forward everything after /2fa/ directly as a path.
+            // Example: samy.pro.bd/2fa/SECRET -> 2fa.samy.pro.bd/SECRET
+            const secret = pathSegments.slice(1).join('/');
             
-            if (existingHash) {
-                // If user used samy.pro.bd/2fa/#secret, forward the hash exactly as is.
-                window.location.replace("https://2fa.samy.pro.bd/" + existingHash);
-            } else {
-                // If user used the unsafe samy.pro.bd/2fa/secret (path format),
-                // we "upgrade" it to a hash so it stays client-side from now on.
-                const secretFromPath = pathSegments.slice(1).join('/');
-                window.location.replace("https://2fa.samy.pro.bd/#" + secretFromPath);
-            }
+            // If there's already a hash, we pass it along. 
+            // Browser automatically keeps the hash during a replace() if it's on the same domain,
+            // but for cross-domain jumps, we append it explicitly.
+            const hash = window.location.hash;
+            window.location.replace("https://2fa.samy.pro.bd/" + secret + hash);
             return;
         }
 
