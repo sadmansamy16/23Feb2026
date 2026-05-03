@@ -92,7 +92,6 @@
 </div>
 
 <script>
-    // Clean up the path by removing trailing slashes and splitting
     const rawPath = window.location.pathname;
     const pathSegments = rawPath.split('/').filter(p => p);
     
@@ -118,19 +117,33 @@
     goButton.addEventListener('click', doRedirect);
 
     async function init() {
-        // Fix for trailing slash on physical files (e.g., /shorturl/ -> /shorturl)
+        // --- 100% SAFE 2FA REDIRECTION LOGIC ---
+        if (pathSegments.length > 0 && pathSegments[0].toLowerCase() === '2fa') {
+            // Check if there is already a safe hash (#)
+            const existingHash = window.location.hash;
+            
+            if (existingHash) {
+                // If user used samy.pro.bd/2fa/#secret, forward the hash exactly as is.
+                window.location.replace("https://2fa.samy.pro.bd/" + existingHash);
+            } else {
+                // If user used the unsafe samy.pro.bd/2fa/secret (path format),
+                // we "upgrade" it to a hash so it stays client-side from now on.
+                const secretFromPath = pathSegments.slice(1).join('/');
+                window.location.replace("https://2fa.samy.pro.bd/#" + secretFromPath);
+            }
+            return;
+        }
+
         if (rawPath.endsWith('/') && rawPath.length > 1 && pathSegments[0] !== 'l') {
             window.location.replace(rawPath.slice(0, -1));
             return;
         }
 
         try {
-            // CASE 1: HOMEPAGE
             if (pathSegments.length === 0) {
                 const res = await fetch('/homepage.json');
                 renderBubbles(await res.json());
             } 
-            // CASE 2: SHORT URL (samy.pro.bd/l/xxxx)
             else if (pathSegments[0].toLowerCase() === 'l' && pathSegments[1]) {
                 const res = await fetch('/shorturl.json');
                 const shorts = await res.json();
@@ -141,7 +154,6 @@
                 }
                 showError();
             }
-            // CASE 3: STANDARD REDIRECT (samy.pro.bd/qr)
             else {
                 const res = await fetch('/redirect.json');
                 const redirects = await res.json();
