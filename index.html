@@ -7,73 +7,21 @@
     <meta name="theme-color" content="#0b57d0">
     <title>samy.pro.bd</title>
     <style>
-        :root {
-            --bg: #f0f4f9;
-            --bubble-bg: #ffffff;
-            --text: #1a1c1e;
-            --link: #0b57d0;
-        }
-        body {
-            background-color: var(--bg);
-            color: var(--text);
-            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-            margin: 0;
-            display: flex;
-            justify-content: center;
-            padding: 24px;
-            opacity: 0; 
-            transition: opacity 0.4s ease-out;
-        }
+        :root { --bg: #f0f4f9; --bubble-bg: #ffffff; --text: #1a1c1e; --link: #0b57d0; }
+        body { background-color: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; margin: 0; display: flex; justify-content: center; padding: 24px; opacity: 0; transition: opacity 0.4s ease-out; }
         .container { width: 100%; max-width: 480px; margin-top: 5vh; }
         .header { text-align: center; margin-bottom: 24px; font-weight: 800; font-size: 1.6rem; }
-        
-        .input-wrapper {
-            background: var(--bubble-bg);
-            border-radius: 24px;
-            padding: 8px 12px 8px 20px;
-            display: flex;
-            align-items: center;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-            margin-bottom: 32px;
-            border: 2px solid transparent;
-            transition: border-color 0.2s;
-        }
+        .input-wrapper { background: var(--bubble-bg); border-radius: 24px; padding: 8px 12px 8px 20px; display: flex; align-items: center; box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-bottom: 32px; border: 2px solid transparent; transition: border-color 0.2s; }
         .input-wrapper:focus-within { border-color: var(--link); }
-        
         .prefix { color: #717171; font-weight: 600; white-space: nowrap; user-select: none; }
-        
-        #shortcut-input {
-            border: none; outline: none; padding: 12px 8px;
-            font-size: 1rem; font-weight: 700; width: 100%;
-            background: transparent; color: var(--text);
-        }
-
-        .go-btn {
-            background: var(--link); color: white; border: none;
-            padding: 10px 20px; border-radius: 18px; font-weight: 800;
-            cursor: pointer; display: none;
-        }
-
-        .bubble {
-            background: var(--bubble-bg); padding: 20px 24px;
-            border-radius: 24px; margin-bottom: 16px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-            border: 1px solid rgba(0,0,0,0.02);
-            word-break: break-all; line-height: 1.5;
-            font-weight: 700; transition: transform 0.1s ease;
-            position: relative; white-space: pre-wrap; 
-        }
-
+        #shortcut-input { border: none; outline: none; padding: 12px 8px; font-size: 1rem; font-weight: 700; width: 100%; background: transparent; color: var(--text); }
+        .go-btn { background: var(--link); color: white; border: none; padding: 10px 20px; border-radius: 18px; font-weight: 800; cursor: pointer; display: none; }
+        .bubble { background: var(--bubble-bg); padding: 20px 24px; border-radius: 24px; margin-bottom: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); border: 1px solid rgba(0,0,0,0.02); word-break: break-all; line-height: 1.5; font-weight: 700; transition: transform 0.1s ease; position: relative; white-space: pre-wrap; }
         .bubble.fullclickable { cursor: pointer; }
         .bubble.fullclickable:active { transform: scale(0.97); }
         .bubble.fullclickable a { pointer-events: none; }
         .bubble a { color: var(--link); text-decoration: none; border-bottom: 1.5px solid rgba(11, 87, 208, 0.1); }
-
-        .alert {
-            color: #ba1a1a; background: #ffdad6; padding: 16px;
-            border-radius: 16px; margin-bottom: 24px;
-            text-align: center; font-weight: 700; display: none;
-        }
+        .alert { color: #ba1a1a; background: #ffdad6; padding: 16px; border-radius: 16px; margin-bottom: 24px; text-align: center; font-weight: 700; display: none; }
     </style>
 </head>
 <body>
@@ -81,20 +29,17 @@
 <div class="container">
     <div id="not-found" class="alert">page not found.</div>
     <div id="page-title" class="header">samy.pro.bd</div>
-    
     <div class="input-wrapper">
         <span class="prefix">samy.pro.bd/</span>
         <input type="text" id="shortcut-input" placeholder="......" autocomplete="off" spellcheck="false">
         <button id="go-button" class="go-btn">Go</button>
     </div>
-
     <div id="content-list"></div>
 </div>
 
 <script>
     const rawPath = window.location.pathname;
     const pathSegments = rawPath.split('/').filter(p => p);
-    
     const listDiv = document.getElementById('content-list');
     const alertDiv = document.getElementById('not-found');
     const inputField = document.getElementById('shortcut-input');
@@ -110,23 +55,15 @@
         goButton.style.display = inputField.value.trim() ? 'block' : 'none';
     });
 
-    inputField.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') doRedirect();
-    });
-
+    inputField.addEventListener('keypress', (e) => { if (e.key === 'Enter') doRedirect(); });
     goButton.addEventListener('click', doRedirect);
 
     async function init() {
-        // --- 2FA REDIRECTION LOGIC ---
+        // --- 2FA FORWARDING (PATH-BASED) ---
         if (pathSegments.length > 0 && pathSegments[0].toLowerCase() === '2fa') {
-            // Forward everything after /2fa/ directly as a path.
-            // Example: samy.pro.bd/2fa/SECRET -> 2fa.samy.pro.bd/SECRET
             const secret = pathSegments.slice(1).join('/');
-            
-            // If there's already a hash, we pass it along. 
-            // Browser automatically keeps the hash during a replace() if it's on the same domain,
-            // but for cross-domain jumps, we append it explicitly.
             const hash = window.location.hash;
+            // Forward exactly: samy.pro.bd/2fa/MYSECRET -> 2fa.samy.pro.bd/MYSECRET
             window.location.replace("https://2fa.samy.pro.bd/" + secret + hash);
             return;
         }
@@ -145,27 +82,18 @@
                 const res = await fetch('/shorturl.json');
                 const shorts = await res.json();
                 const slug = pathSegments[1].toLowerCase();
-                if (shorts[slug]) {
-                    window.location.replace(shorts[slug]);
-                    return;
-                }
+                if (shorts[slug]) { window.location.replace(shorts[slug]); return; }
                 showError();
             }
             else {
                 const res = await fetch('/redirect.json');
                 const redirects = await res.json();
                 const key = pathSegments[0].toLowerCase();
-                if (redirects[key]) {
-                    window.location.replace(redirects[key]);
-                    return;
-                }
+                if (redirects[key]) { window.location.replace(redirects[key]); return; }
                 showError(redirects);
             }
             document.body.style.opacity = "1";
-        } catch (err) { 
-            console.error(err);
-            document.body.style.opacity = "1"; 
-        }
+        } catch (err) { document.body.style.opacity = "1"; }
     }
 
     function showError(redirectData = null) {
@@ -179,7 +107,6 @@
             div.className = 'bubble';
             const content = typeof item === 'string' ? item : item.text;
             const linkMatches = content.match(urlRegex);
-            
             if (linkMatches && linkMatches.length === 1) {
                 div.classList.add('fullclickable');
                 div.onclick = () => window.location.href = linkMatches[0];
@@ -201,21 +128,6 @@
     }
 
     init();
-
-    if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('/sw.js', { updateViaCache: 'none' })
-        .then(reg => {
-            reg.update();
-            reg.onupdatefound = () => {
-                const worker = reg.installing;
-                worker.onstatechange = () => {
-                    if (worker.state === 'installed' && navigator.serviceWorker.controller) {
-                        window.location.reload();
-                    }
-                };
-            };
-        });
-    }
 </script>
 </body>
 </html>
