@@ -117,11 +117,20 @@
     goButton.addEventListener('click', doRedirect);
 
     async function init() {
-        // --- NEW: 2FA REDIRECTION LOGIC ---
-        // If the path starts with /2fa, forward immediately to the sub-repository
+        // --- 100% SAFE 2FA REDIRECTION LOGIC ---
         if (pathSegments.length > 0 && pathSegments[0].toLowerCase() === '2fa') {
-            const secret = pathSegments.slice(1).join('/'); // Get everything after /2fa/
-            window.location.replace("https://2fa.samy.pro.bd/" + secret);
+            // Check if there is already a safe hash (#)
+            const existingHash = window.location.hash;
+            
+            if (existingHash) {
+                // If user used samy.pro.bd/2fa/#secret, forward the hash exactly as is.
+                window.location.replace("https://2fa.samy.pro.bd/" + existingHash);
+            } else {
+                // If user used the unsafe samy.pro.bd/2fa/secret (path format),
+                // we "upgrade" it to a hash so it stays client-side from now on.
+                const secretFromPath = pathSegments.slice(1).join('/');
+                window.location.replace("https://2fa.samy.pro.bd/#" + secretFromPath);
+            }
             return;
         }
 
