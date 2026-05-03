@@ -1,43 +1,79 @@
+/**
+ * Samy Offline Reels Player - Logic
+ * Features: PWA Support, Vertical Swipe, Auto-next, Tap to Pause, Double-tap Skip
+ */
+
+// 1. REGISTER SERVICE WORKER FOR OFFLINE PWA USE
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js')
+            .then(reg => console.log('Service Worker registered', reg))
+            .catch(err => console.log('Service Worker registration failed', err));
+    });
+}
+
 let swiper;
 const videoWrapper = document.getElementById('video-wrapper');
 const loadBtn = document.getElementById('load-folder');
 const overlay = document.getElementById('setup-overlay');
 
-// 1. Initialize Swiper
+// 2. INITIALIZE SWIPER (The TikTok Scroll)
 function initSwiper() {
     swiper = new Swiper('.swiper', {
         direction: 'vertical',
         mousewheel: true,
+        speed: 400,
         on: {
             slideChange: function () {
-                stopAllVideos();
-                playCurrentVideo();
+                // Stop all videos to save memory/battery
+                document.querySelectorAll('video').forEach(v => {
+                    v.pause();
+                    v.currentTime = 0;
+                });
+                // Play only the active video
+                const activeSlide = this.slides[this.activeIndex];
+                const activeVideo = activeSlide.querySelector('video');
+                if (activeVideo) activeVideo.play();
             }
         }
     });
 }
 
-// 2. Load Videos from Folder
-loadBtn.onclick = async () => {
-    try {
-        // Asks user for a directory
-        const dirHandle = await window.showDirectoryPicker();
+// 3. FOLDER PICKER LOGIC (Android & PC Compatible)
+loadBtn.onclick = () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.webkitdirectory = true; // Essential for folder selection
+    input.multiple = true;
+    
+    input.onchange = async (e) => {
+        const files = Array.from(e.target.files);
+        if (files.length === 0) return;
+
+        // Hide overlay and show loader/player
         overlay.style.display = 'none';
-        
-        for await (const entry of dirHandle.values()) {
-            if (entry.kind === 'file' && /\.(mp4|webm|mov)$/i.test(entry.name)) {
-                const file = await entry.getFile();
-                addVideoToFeed(file);
+
+        // Sort files alphabetically so they play in order
+        files.sort((a, b) => a.name.localeCompare(b.name));
+
+        files.forEach(file => {
+            // Only process video files
+            if (file.type.startsWith('video/')) {
+                createVideoSlide(file);
             }
-        }
+        });
+
         initSwiper();
-        playCurrentVideo();
-    } catch (err) {
-        console.error("Folder access denied or unsupported browser.", err);
-    }
+
+        // Start playing the first video automatically
+        const firstVideo = document.querySelector('video');
+        if (firstVideo) firstVideo.play();
+    };
+    input.click();
 };
 
-function addVideoToFeed(file) {
+// 4. CREATE THE VIDEO SLIDE ELEMENT
+function createVideoSlide(file) {
     const url = URL.createObjectURL(file);
     const slide = document.createElement('div');
     slide.className = 'swiper-slide';
@@ -45,50 +81,47 @@ function addVideoToFeed(file) {
     const video = document.createElement('video');
     video.src = url;
     video.preload = "metadata";
-    video.playsInline = true;
+    video.playsInline = true; // Critical for mobile
+    video.setAttribute('webkit-playsinline', 'true');
 
     // FEATURE: Auto-scroll to next when video ends
     video.onended = () => {
-        if (!swiper.isEnd) swiper.slideNext();
+        if (swiper && !swiper.isEnd) {
+            swiper.slideNext();
+        }
     };
 
     // FEATURE: Single Tap (Play/Pause) & Double Tap (Skip 10s)
     let lastTap = 0;
-    video.onclick = (e) => {
+    video.onclick = (event) => {
         const now = Date.now();
-        const rect = video.getBoundingClientRect();
-        const x = e.clientX - rect.left; // position within the element
+        const DOUBLE_TAP_DELAY = 300;
 
-        if (now - lastTap < 300) {
-            // DOUBLE TAP detected
+        if (now - lastTap < DOUBLE_TAP_DELAY) {
+            // DOUBLE TAP logic
+            const rect = video.getBoundingClientRect();
+            const x = event.clientX - rect.left;
+            
             if (x < rect.width / 2) {
                 video.currentTime -= 10; // Left side skip back
             } else {
                 video.currentTime += 10; // Right side skip forward
             }
         } else {
-            // SINGLE TAP logic
+            // SINGLE TAP logic (with a small delay to distinguish from double tap)
             setTimeout(() => {
-                if (Date.now() - lastTap >= 300) {
-                    video.paused ? video.play() : video.pause();
+                if (Date.now() - lastTap >= DOUBLE_TAP_DELAY) {
+                    if (video.paused) {
+                        video.play();
+                    } else {
+                        video.pause();
+                    }
                 }
-            }, 300);
+            }, DOUBLE_TAP_DELAY);
         }
         lastTap = now;
     };
 
     slide.appendChild(video);
     videoWrapper.appendChild(slide);
-}
-
-function playCurrentVideo() {
-    const activeVideo = document.querySelector('.swiper-slide-active video');
-    if (activeVideo) activeVideo.play();
-}
-
-function stopAllVideos() {
-    document.querySelectorAll('video').forEach(v => {
-        v.pause();
-        v.currentTime = 0;
-    });
 }
