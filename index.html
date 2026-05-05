@@ -8,85 +8,19 @@
     <title>samy.pro.bd</title>
     <style>
         :root { --bg: #f0f4f9; --bubble-bg: #ffffff; --text: #1a1c1e; --link: #0b57d0; }
-        
-        body { 
-            background-color: var(--bg); 
-            color: var(--text); 
-            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; 
-            margin: 0; 
-            display: flex; 
-            flex-direction: column;
-            align-items: center; 
-            justify-content: center; 
-            min-height: 100vh;
-            padding: 24px; 
-            opacity: 0; 
-            transition: opacity 0.4s ease-out; 
-            box-sizing: border-box;
-        }
-
-        .container { 
-            width: 100%; 
-            max-width: 480px; 
-            text-align: center;
-        }
-
-        #error-container { 
-            display: none; 
-            margin-bottom: 40px; 
-            animation: fadeIn 0.6s ease;
-        }
-
-        .error-code { 
-            font-size: clamp(7rem, 25vw, 9rem); 
-            font-weight: 900; 
-            line-height: 0.8; 
-            color: #000; 
-            margin: 0; 
-            letter-spacing: -6px;
-        }
-
-        .error-message { 
-            font-size: 1rem; 
-            font-weight: 700; 
-            color: #1a1c1e; 
-            text-transform: uppercase; 
-            letter-spacing: 1.5px;
-            margin-top: 24px;
-            white-space: pre-wrap; 
-            line-height: 1.4;
-        }
-
+        body { background-color: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; margin: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; padding: 24px; opacity: 0; transition: opacity 0.4s ease-out; box-sizing: border-box; }
+        .container { width: 100%; max-width: 480px; text-align: center; }
+        #error-container { display: none; margin-bottom: 40px; animation: fadeIn 0.6s ease; }
+        .error-code { font-size: clamp(7rem, 25vw, 9rem); font-weight: 900; line-height: 0.8; color: #000; margin: 0; letter-spacing: -6px; }
+        .error-message { font-size: 1rem; font-weight: 700; color: #1a1c1e; text-transform: uppercase; letter-spacing: 1.5px; margin-top: 24px; white-space: pre-wrap; line-height: 1.4; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-
-        .input-wrapper { 
-            background: var(--bubble-bg); 
-            border-radius: 24px; 
-            padding: 8px 12px 8px 20px; 
-            display: flex; 
-            align-items: center; 
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05); 
-            border: 2px solid transparent; 
-            transition: border-color 0.2s;
-        }
-
+        .input-wrapper { background: var(--bubble-bg); border-radius: 24px; padding: 8px 12px 8px 20px; display: flex; align-items: center; box-shadow: 0 4px 12px rgba(0,0,0,0.05); border: 2px solid transparent; transition: border-color 0.2s; }
         .input-wrapper:focus-within { border-color: var(--link); }
         .prefix { color: #717171; font-weight: 600; white-space: nowrap; user-select: none; }
         #shortcut-input { border: none; outline: none; padding: 12px 8px; font-size: 1rem; font-weight: 700; width: 100%; background: transparent; color: var(--text); }
         .go-btn { background: var(--link); color: white; border: none; padding: 10px 20px; border-radius: 18px; font-weight: 800; cursor: pointer; display: none; }
-        
         #content-list { margin-top: 20px; width: 100%; }
-        .bubble { 
-            background: var(--bubble-bg); 
-            padding: 20px 24px; 
-            border-radius: 24px; 
-            margin-bottom: 16px; 
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05); 
-            text-align: left; 
-            font-weight: 700; 
-            word-break: break-all;
-            white-space: pre-wrap;
-        }
+        .bubble { background: var(--bubble-bg); padding: 20px 24px; border-radius: 24px; margin-bottom: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); text-align: left; font-weight: 700; word-break: break-all; white-space: pre-wrap; }
         .bubble.fullclickable { cursor: pointer; }
         .bubble a { color: var(--link); text-decoration: none; }
     </style>
@@ -105,7 +39,6 @@ PAGE NOT FOUND.</div>
         <input type="text" id="shortcut-input" placeholder="......" autocomplete="off" spellcheck="false">
         <button id="go-button" class="go-btn">Go</button>
     </div>
-
     <div id="content-list"></div>
 </div>
 
@@ -131,71 +64,48 @@ PAGE NOT FOUND.</div>
     goButton.addEventListener('click', doRedirect);
 
     async function init() {
-        // 1. 2FA Forwarding
-        if (pathSegments.length > 0 && pathSegments[0].toLowerCase() === '2fa') {
+        const key = pathSegments[0]?.toLowerCase();
+
+        // 1. BYPASS RULE: If it's a real folder or has a file extension
+        if (key === 'page' || rawPath.includes('.')) {
+            document.body.style.opacity = "1";
+            return; 
+        }
+
+        // 2. 2FA Logic
+        if (key === '2fa') {
             const secret = pathSegments.slice(1).join('/');
             window.location.replace("https://2fa.samy.pro.bd/" + secret + window.location.hash);
             return;
         }
 
-        // 2. Trailing Slash Fix
-        if (rawPath.endsWith('/') && rawPath.length > 1 && pathSegments[0] !== 'p') {
-            window.location.replace(rawPath.slice(0, -1));
-            return;
-        }
-
         try {
-            // 3. Homepage Logic
+            // 3. Homepage
             if (pathSegments.length === 0) {
-                errorDiv.style.display = 'none';
                 const res = await fetch('/homepage.json');
                 renderBubbles(await res.json());
                 document.body.style.opacity = "1";
                 return;
-            } 
+            }
 
-            const key = pathSegments[0].toLowerCase();
-
-            // 4. Handle /p/ logic (Redirects vs Files like qr.html)
+            // 4. Short URL logic (/p/slug)
             if (key === 'p' && pathSegments[1]) {
                 const sRes = await fetch('/shorturl.json');
                 const shorts = await sRes.json();
                 const slug = pathSegments[1].toLowerCase();
-                
-                if (shorts[slug]) { 
-                    window.location.replace(shorts[slug]); 
-                    return; 
-                }
-
-                // If not in JSON, check if the actual file /p/qr.html exists
-                const fileCheck = await fetch(window.location.pathname, { method: 'HEAD' });
-                if (fileCheck.ok) {
-                    document.body.style.opacity = "1";
-                    return; 
-                }
+                if (shorts[slug]) { window.location.replace(shorts[slug]); return; }
             }
 
-            // 5. Handle Root Redirects (like /chat)
-            const res = await fetch('/redirect.json');
-            const redirects = await res.json();
-            if (redirects[key]) { 
-                window.location.replace(redirects[key]); 
-                return; 
-            }
+            // 5. Normal Redirects (/chat, etc)
+            const rRes = await fetch('/redirect.json');
+            const redirects = await rRes.json();
+            if (redirects[key]) { window.location.replace(redirects[key]); return; }
 
-            // 6. Final check: Does this path exist as a real folder/file?
-            const finalCheck = await fetch(window.location.pathname, { method: 'HEAD' });
-            if (finalCheck.ok) {
-                document.body.style.opacity = "1";
-                return;
-            }
-
-            // 7. Show 404 if everything else fails
+            // 6. If we get here, it's a 404
             showError();
             document.body.style.opacity = "1";
-
-        } catch (err) { 
-            document.body.style.opacity = "1"; 
+        } catch (err) {
+            document.body.style.opacity = "1";
             if (pathSegments.length > 0) showError();
         }
     }
