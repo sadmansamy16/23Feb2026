@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="QR Scanner">
+    <title>QR Scanner | samy.pro.bd</title>
+
+    <link rel="icon" type="image/png" href="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEjrCr8IxkkTuesGFYVVrS1dMURsUjSpuBCwOc9YOxWBB8NDK9LAyiu6hfqNYBDVIpJcfQ0AW_iC2C8EVUNmUyu1xzzSrd37tBR0Sxmq-uP7qi9RFVZI6rY4OKS0Sem5o247dgJVc0TsC6IWcpTPFwDHHva_Pl8aVvbwCLisvTITCHkzMrL6HYAcAzHnWPU/s554/27680.png">
+    <link rel="apple-touch-icon" href="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEjrCr8IxkkTuesGFYVVrS1dMURsUjSpuBCwOc9YOxWBB8NDK9LAyiu6hfqNYBDVIpJcfQ0AW_iC2C8EVUNmUyu1xzzSrd37tBR0Sxmq-uP7qi9RFVZI6rY4OKS0Sem5o247dgJVc0TsC6IWcpTPFwDHHva_Pl8aVvbwCLisvTITCHkzMrL6HYAcAzHnWPU/s554/27680.png">
+
+    <script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+    <style>
+        :root { --bg: #f0f4f9; --card: #ffffff; --text: #1a1c1e; --sub: #5f6368; --link: #0b57d0; }
+        
+        body {
+            -webkit-user-select: none;
+            user-select: none;
+            overscroll-behavior: none;
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg);
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .samy-app-flat {
+            width: 100%;
+            max-width: 420px;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .samy-main-card {
+            background: var(--card);
+            border-radius: 32px;
+            padding: 32px 24px;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.06);
+            text-align: center;
+        }
+
+        .card-title { display: block; font-size: 24px; font-weight: 800; color: var(--text); margin-bottom: 8px; }
+        .card-subtitle { font-size: 14px; color: var(--sub); margin-bottom: 30px; display: block; font-weight: 600; }
+
+        #ui-controls { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+
+        .samy-btn-modern {
+            padding: 16px;
+            border: 1px solid #e0e2e6;
+            border-radius: 20px;
+            font-weight: 700;
+            font-size: 14px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            background: #ffffff;
+            color: var(--text);
+            transition: all 0.2s ease;
+        }
+
+        .samy-btn-modern:active { transform: scale(0.96); background: #f8f9fa; }
+
+        #cam-surface { 
+            width: 100%; 
+            border-radius: 24px; 
+            overflow: hidden; 
+            display: none; 
+            background: #000;
+            margin-bottom: 15px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+        }
+
+        #cam-engine { width: 100% !important; }
+
+        .bg-red { 
+            background: #ffdad6; 
+            color: #ba1a1a; 
+            border: none;
+            width: 100%;
+            margin-top: 10px;
+            display: none;
+        }
+
+        #result-box {
+            display: none;
+            margin-top: 25px;
+            text-align: left;
+            animation: fadeIn 0.4s ease-out;
+        }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .pill-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding: 0 5px; }
+        .pill-label { font-size: 12px; font-weight: 800; text-transform: uppercase; color: var(--sub); letter-spacing: 1px; }
+        .pill-copy { background: var(--link); color: white; border: none; padding: 6px 18px; border-radius: 20px; font-size: 12px; font-weight: 800; cursor: pointer; }
+
+        #inner-text { 
+            background: #f0f4f9; 
+            padding: 18px; 
+            border-radius: 20px; 
+            font-size: 15px; 
+            word-break: break-all; 
+            color: var(--text);
+            font-weight: 600;
+            user-select: text;
+            -webkit-user-select: text;
+            border: 1px solid rgba(0,0,0,0.03);
+        }
+
+        #qr-display-area { display: none; text-align: center; margin-top: 24px; }
+        #qrcode-canvas img { margin: 0 auto; padding: 12px; background: white; border-radius: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+    </style>
+</head>
+<body>
+
+<div class="samy-app-flat">
+    <div class="samy-main-card">
+        <span class="card-title">QR Scanner</span>
+        <span class="card-subtitle">Scan or Upload Image</span>
+
+        <div id="ui-controls">
+            <button class="samy-btn-modern" onclick="runSamyCam()">📷 Camera</button>
+            <button class="samy-btn-modern" onclick="document.getElementById('file-picker').click()">🖼️ File</button>
+        </div>
+
+        <input type="file" id="file-picker" accept="image/*" style="display:none" onchange="samyFileScan(this)">
+
+        <div id="cam-surface"><div id="cam-engine"></div></div>
+        <button id="cam-off" class="samy-btn-modern bg-red" onclick="killSamyCam()">✕ Close Camera</button>
+
+        <div id="result-box">
+            <div class="pill-header">
+                <span class="pill-label">Found Content</span>
+                <button class="pill-copy" onclick="doSamyCopy()" id="cp-pill">Copy</button>
+            </div>
+            <div id="inner-text"></div>
+            <div id="qr-display-area"><div id="qrcode-canvas"></div></div>
+        </div>
+    </div>
+</div>
+
+<script>
+let samyEngine = null;
+let qrMaker = null;
+
+function setUiState(isCamOpen) {
+    document.getElementById('ui-controls').style.display = isCamOpen ? 'none' : 'grid';
+    document.getElementById('cam-surface').style.display = isCamOpen ? 'block' : 'none';
+    document.getElementById('cam-off').style.display = isCamOpen ? 'flex' : 'none';
+    if(isCamOpen) document.getElementById('result-box').style.display = 'none';
+}
+
+window.runSamyCam = function() {
+    setUiState(true);
+    setTimeout(() => {
+        try {
+            samyEngine = new Html5Qrcode("cam-engine");
+            samyEngine.start(
+                { facingMode: "environment" }, 
+                { fps: 15, qrbox: { width: 250, height: 250 } }, 
+                (text) => { onSamyFound(text); }
+            ).catch(err => {
+                alert("Camera error: " + err);
+                killSamyCam();
+            });
+        } catch (e) {
+            killSamyCam();
+        }
+    }, 100);
+};
+
+window.killSamyCam = function() {
+    setUiState(false);
+    if (samyEngine) {
+        samyEngine.stop().then(() => {
+            samyEngine.clear();
+            samyEngine = null;
+        }).catch(() => {
+            samyEngine = null;
+        });
+    }
+};
+
+window.samyFileScan = function(input) {
+    if (input.files && input.files[0]) {
+        const fileScanner = new Html5Qrcode("cam-engine");
+        fileScanner.scanFile(input.files[0], false)
+            .then(text => onSamyFound(text))
+            .catch(err => alert("No QR code detected in this image."));
+    }
+};
+
+function onSamyFound(text) {
+    killSamyCam();
+    document.getElementById('result-box').style.display = 'block';
+    document.getElementById('inner-text').innerText = text;
+    document.getElementById('qr-display-area').style.display = 'block';
+    
+    if (!qrMaker) {
+        qrMaker = new QRCode(document.getElementById("qrcode-canvas"), { width: 180, height: 180 });
+    }
+    qrMaker.clear();
+    qrMaker.makeCode(text);
+}
+
+window.doSamyCopy = function() {
+    const text = document.getElementById('inner-text').innerText;
+    navigator.clipboard.writeText(text).then(() => {
+        const b = document.getElementById('cp-pill');
+        b.innerText = "Copied!";
+        setTimeout(() => b.innerText = "Copy", 2000);
+    });
+};
+</script>
+</body>
+</html>
