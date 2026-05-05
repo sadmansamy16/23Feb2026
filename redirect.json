@@ -1,6 +1,6 @@
 {
   "2fa": "http://2fa.samy.pro.bd",
-  "qryx": "https://s.samy.pro.bd/p/qr.html",
+  "qr": "https://samy.pro.bd/p/qr",
   "password": "https://vault.bitwarden.eu",
   "bw": "https://vault.bitwarden.eu",
 "su": "https://samy.pro.bd/shorturl/",
