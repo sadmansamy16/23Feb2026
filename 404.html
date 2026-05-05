@@ -8,46 +8,78 @@
     <title>samy.pro.bd</title>
     <style>
         :root { --bg: #f0f4f9; --bubble-bg: #ffffff; --text: #1a1c1e; --link: #0b57d0; }
-        body { background-color: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; margin: 0; display: flex; justify-content: center; padding: 24px; opacity: 0; transition: opacity 0.4s ease-out; }
-        .container { width: 100%; max-width: 480px; margin-top: 8vh; }
-        .header { text-align: center; margin-bottom: 24px; font-weight: 800; font-size: 1.6rem; }
         
+        body { 
+            background-color: var(--bg); 
+            color: var(--text); 
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; 
+            margin: 0; 
+            display: flex; 
+            flex-direction: column;
+            align-items: center; 
+            justify-content: center; 
+            min-height: 100vh;
+            padding: 24px; 
+            opacity: 0; 
+            transition: opacity 0.4s ease-out; 
+        }
+
+        .container { 
+            width: 100%; 
+            max-width: 480px; 
+            text-align: center;
+        }
+
         /* Modern 404 Hero Section */
         #error-container { 
             display: none; 
-            text-align: center; 
             margin-bottom: 40px; 
             animation: fadeIn 0.6s ease;
         }
+
         .error-code { 
-            font-size: 9rem; 
+            font-size: clamp(8rem, 30vw, 10rem); /* Responsive sizing */
             font-weight: 900; 
             line-height: 0.8; 
             color: #000; 
             margin: 0; 
             letter-spacing: -6px;
         }
+
         .error-message { 
             font-size: 1rem; 
             font-weight: 700; 
             color: #1a1c1e; 
             text-transform: uppercase; 
             letter-spacing: 1.5px;
-            margin-top: 20px;
+            margin-top: 24px;
         }
 
         @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 
-        .input-wrapper { background: var(--bubble-bg); border-radius: 24px; padding: 8px 12px 8px 20px; display: flex; align-items: center; box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-bottom: 32px; border: 2px solid transparent; transition: border-color 0.2s; }
+        /* Search Box at Bottom */
+        .input-wrapper { 
+            background: var(--bubble-bg); 
+            border-radius: 24px; 
+            padding: 8px 12px 8px 20px; 
+            display: flex; 
+            align-items: center; 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05); 
+            border: 2px solid transparent; 
+            transition: border-color 0.2s;
+            margin-top: 20px;
+        }
+
         .input-wrapper:focus-within { border-color: var(--link); }
         .prefix { color: #717171; font-weight: 600; white-space: nowrap; user-select: none; }
         #shortcut-input { border: none; outline: none; padding: 12px 8px; font-size: 1rem; font-weight: 700; width: 100%; background: transparent; color: var(--text); }
         .go-btn { background: var(--link); color: white; border: none; padding: 10px 20px; border-radius: 18px; font-weight: 800; cursor: pointer; display: none; }
         
-        .bubble { background: var(--bubble-bg); padding: 20px 24px; border-radius: 24px; margin-bottom: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); border: 1px solid rgba(0,0,0,0.02); word-break: break-all; line-height: 1.5; font-weight: 700; transition: transform 0.1s ease; position: relative; white-space: pre-wrap; }
+        /* Hide regular content list if showing error */
+        #content-list { margin-top: 20px; }
+        .bubble { background: var(--bubble-bg); padding: 20px 24px; border-radius: 24px; margin-bottom: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); text-align: left; font-weight: 700; word-break: break-all; }
         .bubble.fullclickable { cursor: pointer; }
-        .bubble.fullclickable:active { transform: scale(0.97); }
-        .bubble a { color: var(--link); text-decoration: none; border-bottom: 1.5px solid rgba(11, 87, 208, 0.1); }
+        .bubble a { color: var(--link); text-decoration: none; }
     </style>
 </head>
 <body>
@@ -58,8 +90,6 @@
         <div class="error-message">SORRY, PAGE NOT FOUND.</div>
     </div>
 
-    <div id="page-title" class="header">samy.pro.bd</div>
-    
     <div class="input-wrapper">
         <span class="prefix">samy.pro.bd/</span>
         <input type="text" id="shortcut-input" placeholder="......" autocomplete="off" spellcheck="false">
@@ -91,6 +121,7 @@
     goButton.addEventListener('click', doRedirect);
 
     async function init() {
+        // 2FA forwarding
         if (pathSegments.length > 0 && pathSegments[0].toLowerCase() === '2fa') {
             const secret = pathSegments.slice(1).join('/');
             const hash = window.location.hash;
@@ -98,6 +129,7 @@
             return;
         }
 
+        // Clean trailing slashes
         if (rawPath.endsWith('/') && rawPath.length > 1 && pathSegments[0] !== 'p') {
             window.location.replace(rawPath.slice(0, -1));
             return;
@@ -105,6 +137,8 @@
 
         try {
             if (pathSegments.length === 0) {
+                // Home page: hide error, show bubbles
+                errorDiv.style.display = 'none';
                 const res = await fetch('/homepage.json');
                 renderBubbles(await res.json());
             } 
@@ -120,14 +154,18 @@
                 const redirects = await res.json();
                 const key = pathSegments[0].toLowerCase();
                 if (redirects[key]) { window.location.replace(redirects[key]); return; }
-                showError(); // Now just shows the 404 UI without the directory
+                showError();
             }
             document.body.style.opacity = "1";
-        } catch (err) { document.body.style.opacity = "1"; }
+        } catch (err) { 
+            document.body.style.opacity = "1"; 
+            if (pathSegments.length > 0) showError();
+        }
     }
 
     function showError() {
         errorDiv.style.display = 'block';
+        listDiv.style.display = 'none'; // Ensure no content bubbles show during 404
     }
 
     function renderBubbles(data) {
