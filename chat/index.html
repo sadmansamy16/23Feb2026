@@ -87,7 +87,7 @@
                 // Check if user is currently at the bottom
                 const isAtBottom = chat.scrollHeight - chat.clientHeight <= chat.scrollTop + 50;
 
-                const response = await fetch('./messages.json?t=' + Date.now());
+                const response = await fetch('./chat.json?t=' + Date.now());
                 const messages = await response.json();
                 
                 chat.innerHTML = ''; 
