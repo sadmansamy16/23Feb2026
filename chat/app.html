@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Samy's App Chat</title>
+    <link rel="manifest" href="manifest.json">
+    <style>
+        :root {
+            --bg-color: #e7ebf0;
+            --bubble-right: #effdde;
+            --bubble-left: #ffffff;
+            --link-color: #00488d;
+        }
+
+        body { 
+            background-color: var(--bg-color); 
+            margin: 0; 
+            font-family: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
+            display: flex; 
+            justify-content: center; 
+        }
+
+        .chat-container { 
+            width: 100%; 
+            max-width: 600px; 
+            height: 100vh; 
+            padding: 15px; 
+            box-sizing: border-box; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 12px; 
+            overflow-y: auto; 
+            /* Telegram-style background pattern */
+            background-image: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png'); 
+            background-blend-mode: overlay;
+            scroll-behavior: smooth; 
+        }
+
+        .bubble { 
+            max-width: 85%; 
+            padding: 10px 16px; 
+            border-radius: 18px; 
+            font-size: 16px; 
+            line-height: 1.4; 
+            color: #000; 
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1); 
+            word-wrap: break-word;
+            overflow-wrap: break-word; 
+            position: relative;
+            font-weight: 500;
+        }
+
+        .right { 
+            align-self: flex-end; 
+            background-color: var(--bubble-right); 
+            border-bottom-right-radius: 4px; 
+        }
+
+        .left { 
+            align-self: flex-start; 
+            background-color: var(--bubble-left); 
+            border-bottom-left-radius: 4px; 
+        }
+
+        .bubble a { 
+            color: var(--link-color); 
+            text-decoration: none; 
+            font-weight: 700; 
+            border-bottom: 1px solid rgba(0, 72, 141, 0.2);
+        }
+
+        /* Custom Scrollbar for a cleaner look */
+        .chat-container::-webkit-scrollbar { width: 4px; }
+        .chat-container::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.1); border-radius: 10px; }
+    </style>
+</head>
+<body>
+    <div id="chat" class="chat-container"></div>
+
+    <script>
+        let isFirstLoad = true;
+
+        function linkify(text) {
+            // Handle Markdown style links [Text](Url)
+            const hiddenLinkPattern = /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g;
+            text = text.replace(hiddenLinkPattern, '<a href="$2" target="_blank">$1</a>');
+
+            // Handle raw URLs
+            const urlPattern = /(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/ig;
+            const wwwPattern = /(^|[^\/])(www\.[\S]+(\b|$))/gim;
+            
+            return text.replace(urlPattern, (match) => text.includes('href="' + match) ? match : `<a href="${match}" target="_blank">${match}</a>`)
+                       .replace(wwwPattern, '$1<a href="http://$2" target="_blank">$2</a>');
+        }
+
+        async function loadMessages() {
+            try {
+                const chat = document.getElementById('chat');
+                const isAtBottom = chat.scrollHeight - chat.clientHeight <= chat.scrollTop + 60;
+
+                // CHANGED: Now fetching app-chats.json
+                const response = await fetch('./app-chats.json?t=' + Date.now());
+                if (!response.ok) throw new Error("File not found");
+                
+                const messages = await response.json();
+                
+                chat.innerHTML = ''; 
+                messages.forEach(msg => {
+                    const div = document.createElement('div');
+                    const sideClass = (msg[1] === 'r') ? 'right' : 'left';
+                    div.className = 'bubble ' + sideClass;
+                    div.innerHTML = linkify(msg[0]);
+                    chat.appendChild(div);
+                });
+
+                if (isFirstLoad) {
+                    chat.scrollTop = 0; // Start at top as per your original logic
+                    isFirstLoad = false;
+                } else if (isAtBottom) {
+                    chat.scrollTop = chat.scrollHeight;
+                }
+            } catch (e) { 
+                console.log("Waiting for app-chats.json update..."); 
+            }
+        }
+
+        loadMessages();
+        // Refresh every 10 seconds
+        setInterval(loadMessages, 10000);
+
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js').catch(() => {
+                console.log("Service Worker optional for this build.");
+            });
+        }
+    </script>
+</body>
+</html>
