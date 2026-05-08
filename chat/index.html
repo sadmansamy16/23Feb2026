@@ -6,10 +6,17 @@
     <title>SamyChat</title>
     <link rel="manifest" href="manifest.json">
     <style>
+        :root {
+            --bg-color: #e7ebf0;
+            --bubble-right: #effdde;
+            --bubble-left: #ffffff;
+            --link-color: #00488d;
+        }
+
         body { 
-            background-color: #e7ebf0; 
+            background-color: var(--bg-color); 
             margin: 0; 
-            font-family: -apple-system, system-ui, Roboto, sans-serif; 
+            font-family: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
             display: flex; 
             justify-content: center; 
         }
@@ -24,55 +31,69 @@
             flex-direction: column; 
             gap: 12px; 
             overflow-y: auto; 
+            /* Telegram-style background pattern */
             background-image: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png'); 
             background-blend-mode: overlay;
-            /* 1. Added Smooth Transitions */
             scroll-behavior: smooth; 
         }
 
         .bubble { 
-            /* 2. Added Max Width for better aesthetic */
-            max-width: 75%; 
-            padding: 12px 18px; 
+            max-width: 85%; 
+            padding: 10px 16px; 
             border-radius: 18px; 
-            font-size: 18px; 
-            line-height: 1.5; 
+            font-size: 16px; 
+            line-height: 1.4; 
             color: #000; 
-            box-shadow: 0 1px 1px rgba(0,0,0,0.1); 
-            
-            /* 3. Added Word Break to prevent layout breaking */
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1); 
             word-wrap: break-word;
             overflow-wrap: break-word; 
+            position: relative;
+            font-weight: 500;
+            /* ADDED: This preserves \n line breaks and wraps long text */
+            white-space: pre-wrap; 
         }
 
         .right { 
             align-self: flex-end; 
-            background-color: #effdde; 
+            background-color: var(--bubble-right); 
             border-bottom-right-radius: 4px; 
         }
 
         .left { 
             align-self: flex-start; 
-            background-color: #ffffff; 
+            background-color: var(--bubble-left); 
             border-bottom-left-radius: 4px; 
         }
 
         .bubble a { 
-            color: #00488d; 
+            color: var(--link-color); 
             text-decoration: none; 
-            font-weight: bold; 
+            font-weight: 700; 
+            border-bottom: 1px solid rgba(0, 72, 141, 0.2);
+            /* Reset white-space for links if needed, though pre-wrap usually works fine here */
+            white-space: normal;
         }
+
+        /* Custom Scrollbar for a cleaner look */
+        .chat-container::-webkit-scrollbar { width: 4px; }
+        .chat-container::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.1); border-radius: 10px; }
     </style>
 </head>
 <body>
     <div id="chat" class="chat-container"></div>
+
     <script>
         let isFirstLoad = true;
 
         function linkify(text) {
+            // First, protect line breaks by temporarily replacing \n with a placeholder 
+            // if you find that linkify regex messes with them, but usually white-space: pre-wrap handles it.
+            
+            // Handle Markdown style links [Text](Url)
             const hiddenLinkPattern = /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g;
             text = text.replace(hiddenLinkPattern, '<a href="$2" target="_blank">$1</a>');
 
+            // Handle raw URLs
             const urlPattern = /(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/ig;
             const wwwPattern = /(^|[^\/])(www\.[\S]+(\b|$))/gim;
             
@@ -83,11 +104,11 @@
         async function loadMessages() {
             try {
                 const chat = document.getElementById('chat');
-                
-                // Check if user is currently at the bottom
-                const isAtBottom = chat.scrollHeight - chat.clientHeight <= chat.scrollTop + 50;
+                const isAtBottom = chat.scrollHeight - chat.clientHeight <= chat.scrollTop + 60;
 
-                const response = await fetch('./chat.json?t=' + Date.now());
+                const response = await fetch('./chats.json?t=' + Date.now());
+                if (!response.ok) throw new Error("File not found");
+                
                 const messages = await response.json();
                 
                 chat.innerHTML = ''; 
@@ -95,26 +116,32 @@
                     const div = document.createElement('div');
                     const sideClass = (msg[1] === 'r') ? 'right' : 'left';
                     div.className = 'bubble ' + sideClass;
+                    
+                    // The linkify function processes the text, 
+                    // and white-space: pre-wrap in CSS handles the \n
                     div.innerHTML = linkify(msg[0]);
+                    
                     chat.appendChild(div);
                 });
 
                 if (isFirstLoad) {
-                    // Initial load: Stay at the top
-                    chat.scrollTop = 0;
+                    chat.scrollTop = 0; 
                     isFirstLoad = false;
                 } else if (isAtBottom) {
-                    // Auto-refresh: Only scroll down if they were already at the bottom
                     chat.scrollTop = chat.scrollHeight;
                 }
-            } catch (e) { console.log("Updating..."); }
+            } catch (e) { 
+                console.log("Waiting for app-chats.json update..."); 
+            }
         }
 
         loadMessages();
         setInterval(loadMessages, 10000);
 
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('sw.js');
+            navigator.serviceWorker.register('sw.js').catch(() => {
+                console.log("Service Worker optional for this build.");
+            });
         }
     </script>
 </body>
