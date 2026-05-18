@@ -4,9 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="manifest" href="manifest.json">
-
-<link rel="icon" type="image/x-icon" href="/favicon.ico">
-
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
     <meta name="theme-color" content="#0b57d0">
     <title>samy.pro.bd</title>
     <style>
@@ -184,7 +182,6 @@
 
         try {
             if (pathSegments.length === 0) {
-                // If it is the true root home directory, clear out the 404 assets
                 hide404Elements();
                 const res = await fetch('/homepage.json');
                 renderBubbles(await res.json());
@@ -213,7 +210,6 @@
     }
 
     function showError(redirectData = null) {
-        // Keeps 404 text visible as requested by your style design mockup
         errorCodeEl.style.display = 'block';
         errorMessageEl.style.display = 'block';
     }
@@ -245,6 +241,13 @@
     }
 
     init();
+
+    // Matching Chat PWA registration code layout exactly
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('sw.js').catch(() => {
+            console.log("Service Worker optional for this build.");
+        });
+    }
 </script>
 </body>
 </html>
