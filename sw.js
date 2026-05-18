@@ -15,15 +15,5 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
-    event.respondWith(
-        fetch(event.request)
-            .then((response) => {
-                // Network First: Always try to get fresh data
-                return caches.open(CACHE_NAME).then((cache) => {
-                    cache.put(event.request, response.clone());
-                    return response;
-                });
-            })
-            .catch(() => caches.match(event.request)) // Backup: Show cache if offline
-    );
+    // Keeps the app installable with shortcut menu options instead of a full native PWA install
 });
