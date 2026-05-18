@@ -7,33 +7,138 @@
     <meta name="theme-color" content="#0b57d0">
     <title>samy.pro.bd</title>
     <style>
-        :root { --bg: #f0f4f9; --bubble-bg: #ffffff; --text: #1a1c1e; --link: #0b57d0; }
-        body { background-color: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; margin: 0; display: flex; justify-content: center; padding: 24px; opacity: 0; transition: opacity 0.4s ease-out; }
-        .container { width: 100%; max-width: 480px; margin-top: 5vh; }
-        .header { text-align: center; margin-bottom: 24px; font-weight: 800; font-size: 1.6rem; }
-        .input-wrapper { background: var(--bubble-bg); border-radius: 24px; padding: 8px 12px 8px 20px; display: flex; align-items: center; box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-bottom: 32px; border: 2px solid transparent; transition: border-color 0.2s; }
-        .input-wrapper:focus-within { border-color: var(--link); }
-        .prefix { color: #717171; font-weight: 600; white-space: nowrap; user-select: none; }
-        #shortcut-input { border: none; outline: none; padding: 12px 8px; font-size: 1rem; font-weight: 700; width: 100%; background: transparent; color: var(--text); }
-        .go-btn { background: var(--link); color: white; border: none; padding: 10px 20px; border-radius: 18px; font-weight: 800; cursor: pointer; display: none; }
-        .bubble { background: var(--bubble-bg); padding: 20px 24px; border-radius: 24px; margin-bottom: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); border: 1px solid rgba(0,0,0,0.02); word-break: break-all; line-height: 1.5; font-weight: 700; transition: transform 0.1s ease; position: relative; white-space: pre-wrap; }
+        :root { 
+            --bg: #f0f4f9; 
+            --bubble-bg: #ffffff; 
+            --text: #000000; 
+            --subtext: #1a1c1e;
+            --link: #0b57d0; 
+        }
+        body { 
+            background-color: var(--bg); 
+            color: var(--text); 
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; 
+            margin: 0; 
+            display: flex; 
+            justify-content: center; 
+            padding: 24px; 
+            opacity: 0; 
+            transition: opacity 0.4s ease-out; 
+        }
+        .container { 
+            width: 100%; 
+            max-width: 480px; 
+            margin-top: 8vh; 
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        /* 404 Visual Styling matching screenshot */
+        .error-code {
+            font-size: 7.5rem;
+            font-weight: 900;
+            line-height: 1;
+            margin: 0;
+            letter-spacing: -2px;
+        }
+        .error-message {
+            font-size: 1rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--subtext);
+            margin: 24px 0 48px 0;
+        }
+
+        .header { 
+            text-align: center; 
+            margin-bottom: 24px; 
+            font-weight: 700; 
+            font-size: 1.8rem; 
+            color: var(--subtext);
+        }
+
+        /* Pill-shaped Input Bar matching screenshot */
+        .input-wrapper { 
+            background: var(--bubble-bg); 
+            border-radius: 30px; 
+            padding: 6px 16px 6px 24px; 
+            display: flex; 
+            align-items: center; 
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04); 
+            margin-bottom: 32px; 
+            border: 2px solid var(--link); 
+            width: 100%;
+            box-sizing: border-box;
+        }
+        .prefix { 
+            color: #717171; 
+            font-weight: 600; 
+            font-size: 1.05rem;
+            white-space: nowrap; 
+            user-select: none; 
+        }
+        #shortcut-input { 
+            border: none; 
+            outline: none; 
+            padding: 14px 4px; 
+            font-size: 1.05rem; 
+            font-weight: 600; 
+            width: 100%; 
+            background: transparent; 
+            color: #717171; 
+        }
+        .go-btn { 
+            background: var(--link); 
+            color: white; 
+            border: none; 
+            padding: 10px 20px; 
+            border-radius: 20px; 
+            font-weight: 800; 
+            cursor: pointer; 
+            display: none; 
+            margin-left: 8px;
+        }
+
+        /* Directory Bubbles */
+        #content-list {
+            width: 100%;
+        }
+        .bubble { 
+            background: var(--bubble-bg); 
+            padding: 20px 24px; 
+            border-radius: 24px; 
+            margin-bottom: 16px; 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05); 
+            border: 1px solid rgba(0,0,0,0.02); 
+            word-break: break-all; 
+            line-height: 1.5; 
+            font-weight: 700; 
+            transition: transform 0.1s ease; 
+            position: relative; 
+            white-space: pre-wrap; 
+        }
         .bubble.fullclickable { cursor: pointer; }
         .bubble.fullclickable:active { transform: scale(0.97); }
         .bubble.fullclickable a { pointer-events: none; }
         .bubble a { color: var(--link); text-decoration: none; border-bottom: 1.5px solid rgba(11, 87, 208, 0.1); }
-        .alert { color: #ba1a1a; background: #ffdad6; padding: 16px; border-radius: 16px; margin-bottom: 24px; text-align: center; font-weight: 700; display: none; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div id="not-found" class="alert">page not found.</div>
+    <h1 id="404-code" class="error-code">404</h1>
+    <div id="404-message" class="error-message">Sorry, page not found.</div>
+    
     <div id="page-title" class="header">samy.pro.bd</div>
+    
     <div class="input-wrapper">
         <span class="prefix">samy.pro.bd/</span>
         <input type="text" id="shortcut-input" placeholder="......" autocomplete="off" spellcheck="false">
         <button id="go-button" class="go-btn">Go</button>
     </div>
+    
     <div id="content-list"></div>
 </div>
 
@@ -41,10 +146,12 @@
     const rawPath = window.location.pathname;
     const pathSegments = rawPath.split('/').filter(p => p);
     const listDiv = document.getElementById('content-list');
-    const alertDiv = document.getElementById('not-found');
     const inputField = document.getElementById('shortcut-input');
     const goButton = document.getElementById('go-button');
     const urlRegex = /(https?:\/\/[^\s]+)/g;
+
+    const errorCodeEl = document.getElementById('404-code');
+    const errorMessageEl = document.getElementById('404-message');
 
     function doRedirect() {
         const val = inputField.value.trim().toLowerCase();
@@ -63,18 +170,19 @@
         if (pathSegments.length > 0 && pathSegments[0].toLowerCase() === '2fa') {
             const secret = pathSegments.slice(1).join('/');
             const hash = window.location.hash;
-            // Forward exactly: samy.pro.bd/2fa/MYSECRET -> 2fa.samy.pro.bd/MYSECRET
             window.location.replace("https://2fa.samy.pro.bd/" + secret + hash);
             return;
         }
 
-        if (rawPath.endsWith('/') && rawPath.length > 1 && pathSegments[0] !== 'p') {
+        if (rawPath.endsWith('/') && rawPath.length > 1 && pathSegments[0]?.toLowerCase() !== 'p') {
             window.location.replace(rawPath.slice(0, -1));
             return;
         }
 
         try {
             if (pathSegments.length === 0) {
+                // If it is the true root home directory, clear out the 404 assets
+                hide404Elements();
                 const res = await fetch('/homepage.json');
                 renderBubbles(await res.json());
             } 
@@ -96,8 +204,15 @@
         } catch (err) { document.body.style.opacity = "1"; }
     }
 
+    function hide404Elements() {
+        errorCodeEl.style.display = 'none';
+        errorMessageEl.style.display = 'none';
+    }
+
     function showError(redirectData = null) {
-        alertDiv.style.display = 'block';
+        // Keeps 404 text visible as requested by your style design mockup
+        errorCodeEl.style.display = 'block';
+        errorMessageEl.style.display = 'block';
         if (redirectData) renderRedirects(redirectData);
     }
 
