@@ -3,163 +3,169 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Web SIP Phone</title>
-    <!-- SIP.js CDN লাইব্রেরি -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/sip.js/0.21.2/sip.min.js"></script>
+    <title>Sarker Communication Web Dialer</title>
+    
+    <!-- Mizu WebPhone Main API Library -->
+    <script src="https://www.mizu-voip.com/Portals/0/Files/webphone/webphone.js"></script>
     
     <style>
-        body { font-family: Arial, sans-serif; max-width: 400px; margin: 40px auto; padding: 20px; border: 1px solid #ccc; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
-        input, select, button { width: 100%; padding: 10px; margin: 8px 0; box-sizing: border-box; border-radius: 4px; border: 1px solid #ccc; }
-        button { background-color: #007bff; color: white; border: none; cursor: pointer; font-weight: bold; }
-        button:hover { background-color: #0056b3; }
-        .call-controls { display: none; margin-top: 20px; border-top: 2px solid #eee; padding-top: 20px; }
-        #status { font-weight: bold; color: #555; text-align: center; margin-top: 10px; }
-        .hint { font-size: 12px; color: #666; margin-top: -4px; margin-bottom: 8px; }
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            max-width: 400px; 
+            margin: 50px auto; 
+            padding: 30px; 
+            border: 1px solid #e0e0e0; 
+            border-radius: 12px; 
+            box-shadow: 0 8px 24px rgba(0,0,0,0.05); 
+            background-color: #ffffff; 
+        }
+        h2 { text-align: center; color: #2c3e50; margin-bottom: 25px; font-size: 22px; font-weight: 600; }
+        label { font-size: 13px; color: #34495e; font-weight: 500; display: block; margin-top: 12px; }
+        input, select, button { 
+            width: 100%; 
+            padding: 12px; 
+            margin: 8px 0; 
+            box-sizing: border-box; 
+            border-radius: 6px; 
+            border: 1px solid #cccccc; 
+            font-size: 14px; 
+            transition: all 0.3s ease;
+        }
+        input:focus, select:focus { border-color: #3498db; outline: none; box-shadow: 0 0 4px rgba(52,152,219,0.3); }
+        button { background-color: #2c3e50; color: white; border: none; cursor: pointer; font-weight: bold; font-size: 15px; margin-top: 15px; }
+        button:hover { background-color: #1a252f; }
+        .call-controls { display: none; margin-top: 25px; border-top: 2px dashed #e0e0e0; padding-top: 20px; }
+        #status { font-weight: 600; color: #7f8c8d; text-align: center; margin-top: 20px; font-size: 14px; padding: 8px; border-radius: 4px; background-color: #f8f9fa; }
+        .hint { font-size: 11px; color: #95a5a6; margin-top: -4px; margin-bottom: 12px; }
     </style>
 </head>
 <body>
 
-    <h2 style="text-align: center;">SIP Web Phone</h2>
+    <h2>Sarker Comm Dialer</h2>
     
-    <!-- গুগল পাসওয়ার্ড ম্যানেজার যাতে ইমেইল/ইউজারনেম ও পাসওয়ার্ড প্রম্পট দেখায় -->
-    <form id="sipLoginForm" onsubmit="connectSIP(event)">
+    <!-- Google/Brave Password Manager ট্র্রিগার করার জন্য স্ট্যান্ডার্ড ফর্ম -->
+    <form id="sipLoginForm" onsubmit="connectSarkerSIP(event)">
         
-        <label for="serverSelect">Quick Server Recommendation:</label>
+        <label for="serverSelect">Quick Recommendation:</label>
         <select id="serverSelect" onchange="appendServerDomain()">
-            <option value="">-- Choose Server to Append --</option>
-            <option value="@sip.zadarma.com">Zadarma</option>
-            <option value="@phone.twilio.com">Twilio</option>
-            <option value="@sip.nexmo.com">Vonage / Nexmo</option>
-            <option value="@sip.linphone.org">Linphone</option>
+            <option value="">-- Choose to Auto-Fill Server --</option>
+            <option value="@sip.sarkercommunication.com">Sarker Communication (Default)</option>
         </select>
 
-        <label for="username">SIP Identity:</label>
-        <input type="text" id="username" name="username" placeholder="e.g. 101@sip.zadarma.com" required autocomplete="username">
-        <div class="hint">Format: username@server_address</div>
+        <label for="username">SIP Identity (Username & Server):</label>
+        <input type="text" id="username" name="username" placeholder="e.g. 09649516171@sip.sarkercommunication.com" required autocomplete="username">
+        <div class="hint">Format: your_number@server_address</div>
         
         <label for="password">SIP Password:</label>
-        <input type="password" id="password" name="password" placeholder="SIP Password" required autocomplete="current-password">
+        <input type="password" id="password" name="password" placeholder="Enter Your SIP Password" required autocomplete="current-password">
         
-        <button type="submit">Connect & Save to Google</button>
+        <button type="submit">Login & Save Credentials</button>
     </form>
 
-    <!-- কল কন্ট্রোল সেকশন -->
+    <!-- কল করার ইন্টারফেস (লগইন সফল হলে দৃশ্যমান হবে) -->
     <div id="callSection" class="call-controls">
-        <h3 style="margin-top: 0;">Make a Call</h3>
-        <input type="text" id="callee" placeholder="Enter Number to Call">
-        <button onclick="makeCall()" style="background-color: #28a745;">Call</button>
-        <button onclick="hangUp()" style="background-color: #dc3545;">Hang Up</button>
+        <h3 style="margin-top: 0; color: #2c3e50; font-size: 16px;">Make a Call</h3>
+        <input type="text" id="destination" placeholder="Enter Number (e.g., 017xxxxxxxx)">
+        <button onclick="startCall()" style="background-color: #2ecc71;">Call</button>
+        <button onclick="stopCall()" style="background-color: #e74c3c; margin-top: 5px;">Hang Up</button>
     </div>
 
-    <p id="status"></p>
-
-    <!-- অডিও আউটপুটের জন্য হিডেন ট্যাগ -->
-    <audio id="remoteAudio" autoplay></audio>
+    <p id="status">Status: Disconnected</p>
 
     <script>
-        let userAgent;
-        let currentSession;
+        let isConnected = false;
 
-        // ড্রপডাউন থেকে সার্ভার সিলেক্ট করলে ইউজারনেম ফিল্ডের শেষে ওটা যোগ হবে
+        // ড্রপডাউন থেকে সিলেক্ট করলে ডোমেইনটি ইউজারনেমের শেষে যুক্ত হবে
         function appendServerDomain() {
             const select = document.getElementById('serverSelect');
             const usernameInput = document.getElementById('username');
             
             if (select.value !== "") {
-                // যদি আগে থেকেই কোনো @ থাকে, তবে সেটি বাদ দিয়ে নতুনটি বসাবে
                 let currentVal = usernameInput.value.split('@')[0];
-                if(currentVal === "") currentVal = "username"; // ডেমো টেক্সট যদি খালি থাকে
+                if(currentVal === "") currentVal = "09649516171"; // ডেমো নাম্বার
                 usernameInput.value = currentVal + select.value;
             }
         }
 
-        function connectSIP(event) {
-            event.preventDefault(); 
+        // Mizu WebPhone এর ইভেন্ট লিসেনার সেটআপ
+        window.onload = function() {
+            // অ্যাপ্লিকেশনের কানেকশন স্টেট পরিবর্তন ট্র্যাকিং
+            webphone_api.onAppStateChange(function (state) {
+                const statusText = document.getElementById('status');
+                if (state === 'loaded') {
+                    statusText.innerText = "Status: Ready to connect";
+                } else if (state === 'registered') {
+                    statusText.innerText = "Status: Connected to Sarker Network!";
+                    statusText.style.color = "#2ecc71";
+                    statusText.style.backgroundColor = "#e8f8f5";
+                    document.getElementById('callSection').style.display = 'block';
+                    isConnected = true;
+                } else if (state === 'failed' || state === 'stopped') {
+                    statusText.innerText = "Status: Connection Failed / Disconnected";
+                    statusText.style.color = "#e74c3c";
+                    statusText.style.backgroundColor = "#fdebd0";
+                    document.getElementById('callSection').style.display = 'none';
+                    isConnected = false;
+                }
+            });
+
+            // কলের স্টেট পরিবর্তন ট্র্যাকিং
+            webphone_api.onCallStateChange(function (status, direction, peer, line) {
+                const statusText = document.getElementById('status');
+                if (status === 'setup') {
+                    statusText.innerText = "Status: Calling...";
+                    statusText.style.color = "#3498db";
+                } else if (status === 'connected') {
+                    statusText.innerText = "Status: In Call (Connected)";
+                    statusText.style.color = "#2ecc71";
+                } else if (status === 'disconnected') {
+                    statusText.innerText = "Status: Connected to Sarker Network!";
+                    statusText.style.color = "#2ecc71";
+                }
+            });
+        };
+
+        function connectSarkerSIP(event) {
+            event.preventDefault(); // ফর্ম সাবমিটে পেজ রিফ্রেশ আটকানো
             
             const fullIdentity = document.getElementById('username').value.trim();
             const password = document.getElementById('password').value;
             const statusText = document.getElementById('status');
 
-            // ইনপুট থেকে @ চিহ্নের মাধ্যমে ইউজারনেম এবং ডোমেইন আলাদা করা
             if (!fullIdentity.includes('@')) {
-                statusText.innerText = "Error: Please use username@server format";
-                statusText.style.color = "#dc3545";
+                statusText.innerText = "Status: Error - Use number@server format";
+                statusText.style.color = "#e74c3c";
                 return;
             }
 
             const parts = fullIdentity.split('@');
-            const username = parts[0];
-            const serverDomain = parts[1];
-            
-            // ব্রাউজার ব্যবহারের জন্য স্ট্যান্ডার্ড WebSocket URL তৈরি করা (Default secure port 443 বা 8089 আপনার সার্ভার অনুযায়ী)
-            // আপনি চাইলে ইনপুটেই সরাসরি পোর্ট সহ দিতে পারেন (যেমন: user@server.com:443)
-            const wssServer = `wss://${serverDomain}`; 
+            const username = parts[0];       // আপনার আইপি নম্বর
+            const serverDomain = parts[1];   // সর্কার কমিউনিকেশনের ডোমেইন
 
-            statusText.innerText = "Connecting to " + serverDomain + "...";
-            statusText.style.color = "#007bff";
+            statusText.innerText = "Status: Routing through Mizu Network...";
+            statusText.style.color = "#3498db";
+            statusText.style.backgroundColor = "#ebf5fb";
 
-            const options = {
-                uri: SIP.UserAgent.makeURI(`sip:${username}@${serverDomain}`),
-                transportOptions: { server: wssServer },
-                authorizationUsername: username,
-                authorizationPassword: password
-            };
+            // Mizu API প্যারামিটার কনফিগারেশন (যা Mizudroid অ্যাপের মতো আচরণ করবে)
+            webphone_api.setparameter('gatewayaddress', serverDomain); // আসল ডেস্টিনেশন UDP সার্ভার
+            webphone_api.setparameter('serveraddress', 'webphone.mizu-voip.com'); // Mizu-এর গ্লোবাল WebRTC ক্লাউড প্রক্সি
+            webphone_api.setparameter('username', username);
+            webphone_api.setparameter('password', password);
+            webphone_api.setparameter('transport', 'wss'); // ব্রাউজার সিকিউর ট্র্যান্সপোর্ট এনাবল করা
 
-            try {
-                userAgent = new SIP.UserAgent(options);
-                
-                userAgent.start().then(() => {
-                    document.getElementById('callSection').style.display = 'block';
-                    statusText.innerText = "Connected! Google Password Manager should now prompt to save.";
-                    statusText.style.color = "#28a745";
-                }).catch(err => {
-                    statusText.innerText = "Connection Failed: " + err.message;
-                    statusText.style.color = "#dc3545";
-                });
-            } catch (e) {
-                statusText.innerText = "Configuration Error!";
-                statusText.style.color = "#dc3545";
-            }
+            // কানেকশন শুরু
+            webphone_api.start();
         }
 
-        function makeCall() {
-            const callee = document.getElementById('callee').value;
-            if (!callee) return alert("Please enter a destination number");
-
-            const target = SIP.UserAgent.makeURI(`sip:${callee}@${userAgent.configuration.uri.host}`);
-            const inviter = new SIP.Inviter(userAgent, target);
-            currentSession = inviter;
-
-            inviter.invite().then(() => {
-                document.getElementById('status').innerText = "Calling...";
-                setupAudio(inviter);
-            }).catch(err => {
-                document.getElementById('status').innerText = "Call Failed: " + err.message;
-            });
+        function startCall() {
+            if(!isConnected) return alert("Please login first");
+            const dest = document.getElementById('destination').value.trim();
+            if (!dest) return alert("Please enter a destination number");
+            webphone_api.call(dest);
         }
 
-        function setupAudio(session) {
-            session.stateChange.addListener((state) => {
-                if (state === SIP.SessionState.Established) {
-                    document.getElementById('status').innerText = "In Call (Connected)";
-                    document.getElementById('status').style.color = "#28a745";
-                    
-                    const remoteStream = new MediaStream();
-                    session.sessionDescriptionHandler.peerConnection.getReceivers().forEach((receiver) => {
-                        if (receiver.track) remoteStream.addTrack(receiver.track);
-                    });
-                    document.getElementById('remoteAudio').srcObject = remoteStream;
-                } else if (state === SIP.SessionState.Terminated) {
-                    document.getElementById('status').innerText = "Call Ended";
-                    document.getElementById('status').style.color = "#555";
-                }
-            });
-        }
-
-        function hangUp() {
-            if (currentSession) {
-                currentSession.bye();
-            }
+        function stopCall() {
+            webphone_api.hangup();
         }
     </script>
 </body>
