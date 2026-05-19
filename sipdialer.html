@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web SIP Phone</title>
+    <!-- SIP.js CDN লাইব্রেরি -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sip.js/0.21.2/sip.min.js"></script>
+    
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 400px; margin: 40px auto; padding: 20px; border: 1px solid #ccc; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        input, select, button { width: 100%; padding: 10px; margin: 8px 0; box-sizing: border-box; border-radius: 4px; border: 1px solid #ccc; }
+        button { background-color: #007bff; color: white; border: none; cursor: pointer; font-weight: bold; }
+        button:hover { background-color: #0056b3; }
+        .call-controls { display: none; margin-top: 20px; border-top: 2px solid #eee; padding-top: 20px; }
+        #status { font-weight: bold; color: #555; text-align: center; margin-top: 10px; }
+        .hint { font-size: 12px; color: #666; margin-top: -4px; margin-bottom: 8px; }
+    </style>
+</head>
+<body>
+
+    <h2 style="text-align: center;">SIP Web Phone</h2>
+    
+    <!-- গুগল পাসওয়ার্ড ম্যানেজার যাতে ইমেইল/ইউজারনেম ও পাসওয়ার্ড প্রম্পট দেখায় -->
+    <form id="sipLoginForm" onsubmit="connectSIP(event)">
+        
+        <label for="serverSelect">Quick Server Recommendation:</label>
+        <select id="serverSelect" onchange="appendServerDomain()">
+            <option value="">-- Choose Server to Append --</option>
+            <option value="@sip.zadarma.com">Zadarma</option>
+            <option value="@phone.twilio.com">Twilio</option>
+            <option value="@sip.nexmo.com">Vonage / Nexmo</option>
+            <option value="@sip.linphone.org">Linphone</option>
+        </select>
+
+        <label for="username">SIP Identity:</label>
+        <input type="text" id="username" name="username" placeholder="e.g. 101@sip.zadarma.com" required autocomplete="username">
+        <div class="hint">Format: username@server_address</div>
+        
+        <label for="password">SIP Password:</label>
+        <input type="password" id="password" name="password" placeholder="SIP Password" required autocomplete="current-password">
+        
+        <button type="submit">Connect & Save to Google</button>
+    </form>
+
+    <!-- কল কন্ট্রোল সেকশন -->
+    <div id="callSection" class="call-controls">
+        <h3 style="margin-top: 0;">Make a Call</h3>
+        <input type="text" id="callee" placeholder="Enter Number to Call">
+        <button onclick="makeCall()" style="background-color: #28a745;">Call</button>
+        <button onclick="hangUp()" style="background-color: #dc3545;">Hang Up</button>
+    </div>
+
+    <p id="status"></p>
+
+    <!-- অডিও আউটপুটের জন্য হিডেন ট্যাগ -->
+    <audio id="remoteAudio" autoplay></audio>
+
+    <script>
+        let userAgent;
+        let currentSession;
+
+        // ড্রপডাউন থেকে সার্ভার সিলেক্ট করলে ইউজারনেম ফিল্ডের শেষে ওটা যোগ হবে
+        function appendServerDomain() {
+            const select = document.getElementById('serverSelect');
+            const usernameInput = document.getElementById('username');
+            
+            if (select.value !== "") {
+                // যদি আগে থেকেই কোনো @ থাকে, তবে সেটি বাদ দিয়ে নতুনটি বসাবে
+                let currentVal = usernameInput.value.split('@')[0];
+                if(currentVal === "") currentVal = "username"; // ডেমো টেক্সট যদি খালি থাকে
+                usernameInput.value = currentVal + select.value;
+            }
+        }
+
+        function connectSIP(event) {
+            event.preventDefault(); 
+            
+            const fullIdentity = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value;
+            const statusText = document.getElementById('status');
+
+            // ইনপুট থেকে @ চিহ্নের মাধ্যমে ইউজারনেম এবং ডোমেইন আলাদা করা
+            if (!fullIdentity.includes('@')) {
+                statusText.innerText = "Error: Please use username@server format";
+                statusText.style.color = "#dc3545";
+                return;
+            }
+
+            const parts = fullIdentity.split('@');
+            const username = parts[0];
+            const serverDomain = parts[1];
+            
+            // ব্রাউজার ব্যবহারের জন্য স্ট্যান্ডার্ড WebSocket URL তৈরি করা (Default secure port 443 বা 8089 আপনার সার্ভার অনুযায়ী)
+            // আপনি চাইলে ইনপুটেই সরাসরি পোর্ট সহ দিতে পারেন (যেমন: user@server.com:443)
+            const wssServer = `wss://${serverDomain}`; 
+
+            statusText.innerText = "Connecting to " + serverDomain + "...";
+            statusText.style.color = "#007bff";
+
+            const options = {
+                uri: SIP.UserAgent.makeURI(`sip:${username}@${serverDomain}`),
+                transportOptions: { server: wssServer },
+                authorizationUsername: username,
+                authorizationPassword: password
+            };
+
+            try {
+                userAgent = new SIP.UserAgent(options);
+                
+                userAgent.start().then(() => {
+                    document.getElementById('callSection').style.display = 'block';
+                    statusText.innerText = "Connected! Google Password Manager should now prompt to save.";
+                    statusText.style.color = "#28a745";
+                }).catch(err => {
+                    statusText.innerText = "Connection Failed: " + err.message;
+                    statusText.style.color = "#dc3545";
+                });
+            } catch (e) {
+                statusText.innerText = "Configuration Error!";
+                statusText.style.color = "#dc3545";
+            }
+        }
+
+        function makeCall() {
+            const callee = document.getElementById('callee').value;
+            if (!callee) return alert("Please enter a destination number");
+
+            const target = SIP.UserAgent.makeURI(`sip:${callee}@${userAgent.configuration.uri.host}`);
+            const inviter = new SIP.Inviter(userAgent, target);
+            currentSession = inviter;
+
+            inviter.invite().then(() => {
+                document.getElementById('status').innerText = "Calling...";
+                setupAudio(inviter);
+            }).catch(err => {
+                document.getElementById('status').innerText = "Call Failed: " + err.message;
+            });
+        }
+
+        function setupAudio(session) {
+            session.stateChange.addListener((state) => {
+                if (state === SIP.SessionState.Established) {
+                    document.getElementById('status').innerText = "In Call (Connected)";
+                    document.getElementById('status').style.color = "#28a745";
+                    
+                    const remoteStream = new MediaStream();
+                    session.sessionDescriptionHandler.peerConnection.getReceivers().forEach((receiver) => {
+                        if (receiver.track) remoteStream.addTrack(receiver.track);
+                    });
+                    document.getElementById('remoteAudio').srcObject = remoteStream;
+                } else if (state === SIP.SessionState.Terminated) {
+                    document.getElementById('status').innerText = "Call Ended";
+                    document.getElementById('status').style.color = "#555";
+                }
+            });
+        }
+
+        function hangUp() {
+            if (currentSession) {
+                currentSession.bye();
+            }
+        }
+    </script>
+</body>
+</html>
