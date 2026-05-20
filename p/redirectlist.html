@@ -109,7 +109,7 @@
                 const isAtBottom = chat.scrollHeight - chat.clientHeight <= chat.scrollTop + 60;
 
                 // Adjusted path to fetch from root folder relative to /p/redirectlist
-                const response = await fetch('/redirects.json?t=' + Date.now()); 
+                const response = await fetch('/redirect.json?t=' + Date.now()); 
                 if (!response.ok) throw new Error("File not found");
                 
                 const redirectsData = await response.json();
@@ -145,7 +145,7 @@
                     chat.scrollTop = chat.scrollHeight;
                 }
             } catch (e) { 
-                console.log("Waiting for redirects JSON update...", e); 
+                console.log("Waiting for redirect JSON update...", e); 
             }
         }
 
