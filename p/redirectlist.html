@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SamyChat Redirects</title>
+    <link rel="manifest" href="manifest.json">
+    <style>
+        :root {
+            --bg-color: #e7ebf0;
+            --bubble-right: #effdde;
+            --bubble-left: #ffffff;
+            --link-color: #00488d;
+            --tg-date-color: #4a7298;
+        }
+
+        body { 
+            background-color: var(--bg-color); 
+            margin: 0; 
+            font-family: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
+            display: flex; 
+            justify-content: center; 
+        }
+
+        .chat-container { 
+            width: 100%; 
+            max-width: 600px; 
+            height: 100vh; 
+            padding: 15px; 
+            box-sizing: border-box; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 12px; 
+            overflow-y: auto; 
+            /* Telegram-style background pattern */
+            background-image: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png'); 
+            background-blend-mode: overlay;
+            scroll-behavior: smooth; 
+        }
+
+        /* System service message style for the header */
+        .service-msg {
+            align-self: center;
+            background: rgba(74, 114, 152, 0.6);
+            color: #fff;
+            font-size: 13px;
+            font-weight: 500;
+            padding: 4px 12px;
+            border-radius: 12px;
+            text-align: center;
+            max-width: 80%;
+            box-shadow: 0 1px 1px rgba(0,0,0,0.05);
+        }
+
+        .bubble { 
+            max-width: 85%; 
+            padding: 10px 16px; 
+            border-radius: 18px; 
+            font-size: 16px; 
+            line-height: 1.4; 
+            color: #000; 
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1); 
+            word-wrap: break-word;
+            overflow-wrap: break-word; 
+            position: relative;
+            font-weight: 500;
+            white-space: pre-wrap; 
+        }
+
+        /* Keeping them left-aligned like a channel/bot feed, or alternating if preferred */
+        .left { 
+            align-self: flex-start; 
+            background-color: var(--bubble-left); 
+            border-bottom-left-radius: 4px; 
+        }
+
+        .bubble a { 
+            color: var(--link-color); 
+            text-decoration: none; 
+            font-weight: 700; 
+            border-bottom: 1px solid rgba(0, 72, 141, 0.2);
+            white-space: normal;
+        }
+
+        .bubble .shortcut {
+            color: #e05454;
+            font-family: monospace;
+            background: rgba(0,0,0,0.05);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 14px;
+            margin-right: 4px;
+        }
+
+        /* Custom Scrollbar */
+        .chat-container::-webkit-scrollbar { width: 4px; }
+        .chat-container::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.1); border-radius: 10px; }
+    </style>
+</head>
+<body>
+    <div id="chat" class="chat-container"></div>
+
+    <script>
+        let isFirstLoad = true;
+
+        async function loadMessages() {
+            try {
+                const chat = document.getElementById('chat');
+                const isAtBottom = chat.scrollHeight - chat.clientHeight <= chat.scrollTop + 60;
+
+                // Adjusted path to fetch from root folder relative to /p/redirectlist
+                const response = await fetch('/redirects.json?t=' + Date.now()); 
+                if (!response.ok) throw new Error("File not found");
+                
+                const redirectsData = await response.json();
+                
+                chat.innerHTML = ''; 
+
+                // System info bubble at the top
+                const headerMsg = document.createElement('div');
+                headerMsg.className = 'service-msg';
+                headerMsg.innerText = "Active Redirect Hub";
+                chat.appendChild(headerMsg);
+                
+                // Loop through the JSON Object keys dynamically
+                Object.keys(redirectsData).forEach(key => {
+                    const targetUrl = redirectsData[key];
+                    
+                    // Skip placeholders or broken config lines
+                    if (!targetUrl || targetUrl === "https://") return;
+
+                    const div = document.createElement('div');
+                    div.className = 'bubble left'; // Consistent modern channel look
+                    
+                    // Build clean visual presentation: Redirection keyword -> Target link
+                    div.innerHTML = `<span class="shortcut">/${key}</span> → <a href="${targetUrl}" target="_blank">${targetUrl}</a>`;
+                    
+                    chat.appendChild(div);
+                });
+
+                if (isFirstLoad) {
+                    chat.scrollTop = 0; 
+                    isFirstLoad = false;
+                } else if (isAtBottom) {
+                    chat.scrollTop = chat.scrollHeight;
+                }
+            } catch (e) { 
+                console.log("Waiting for redirects JSON update...", e); 
+            }
+        }
+
+        loadMessages();
+        setInterval(loadMessages, 10000);
+
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js').catch(() => {
+                console.log("Service Worker optional for this build.");
+            });
+        }
+    </script>
+</body>
+</html>
