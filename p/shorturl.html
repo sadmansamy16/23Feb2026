@@ -3,50 +3,148 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Short URL Generator</title>
+    <title>Samy Link Hub</title>
     <style>
-        :root { --bg: #f0f4f9; --card: #ffffff; --primary: #0b57d0; --text: #1a1c1e; }
-        body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); display: flex; justify-content: center; padding: 20px; margin: 0; }
+        :root { 
+            --bg: #f0f4f9; 
+            --card: #ffffff; 
+            --primary: #0b57d0; 
+            --text: #1a1c1e; 
+            --bg-chat: #e7ebf0;
+            --bubble-left: #ffffff;
+            --link-color: #00488d;
+        }
+        
+        body { 
+            font-family: 'Segoe UI', -apple-system, system-ui, sans-serif; 
+            background: var(--bg); 
+            color: var(--text); 
+            display: flex; 
+            justify-content: center; 
+            padding: 0; 
+            margin: 0; 
+            min-height: 100vh;
+        }
+
+        /* --- GENERATOR LAYOUT STYLE --- */
+        .generator-view {
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            width: 100%;
+            padding: 20px;
+            box-sizing: border-box;
+        }
         .card { background: var(--card); padding: 24px; border-radius: 24px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); width: 100%; max-width: 400px; margin-top: 20px; }
         h2 { margin: 0 0 20px 0; font-size: 1.4rem; text-align: center; }
         input { width: 100%; padding: 14px; border: 2px solid #e0e4e9; border-radius: 14px; box-sizing: border-box; font-size: 1rem; outline: none; transition: border-color 0.2s; }
         input:focus { border-color: var(--primary); }
-        
         .btn-group { display: flex; gap: 10px; margin-top: 15px; }
         button { flex: 2; padding: 14px; background: var(--primary); color: white; border: none; border-radius: 14px; cursor: pointer; font-weight: 700; font-size: 1rem; }
-        .secondary-btn { flex: 1; background: #e0e4e9; color: var(--text); font-size: 0.9rem; text-decoration: none; display: flex; align-items: center; justify-content: center; border-radius: 14px; font-weight: 600; }
-
+        .secondary-btn { flex: 1; background: #e0e4e9; color: var(--text); font-size: 0.9rem; text-decoration: none; display: flex; align-items: center; justify-content: center; border-radius: 14px; font-weight: 600; cursor: pointer; }
         .output-label { font-size: 0.8rem; font-weight: 800; color: #717171; margin: 20px 0 8px 5px; text-transform: uppercase; }
         .result-box { background: #f8f9fa; border: 1px dashed #ced4da; padding: 12px; border-radius: 10px; font-family: monospace; font-size: 0.9rem; word-break: break-all; cursor: pointer; position: relative; min-height: 20px; }
-        .result-box:active { background: #e9ecef; }
         .copy-hint { font-size: 0.7rem; color: var(--primary); font-weight: 600; margin-top: 4px; text-align: right; }
+
+        /* --- TELEGRAM CHAT VIEW STYLE --- */
+        .chat-view {
+            display: none; /* Controlled via JS */
+            width: 100%;
+            max-width: 600px;
+            height: 100vh;
+            padding: 15px;
+            box-sizing: border-box;
+            flex-direction: column;
+            gap: 12px;
+            overflow-y: auto;
+            background-color: var(--bg-chat);
+            background-image: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png');
+            background-blend-mode: overlay;
+            scroll-behavior: smooth;
+        }
+        .service-msg {
+            align-self: center;
+            background: rgba(74, 114, 152, 0.6);
+            color: #fff;
+            font-size: 13px;
+            font-weight: 500;
+            padding: 4px 12px;
+            border-radius: 12px;
+            text-align: center;
+            max-width: 80%;
+            box-shadow: 0 1px 1px rgba(0,0,0,0.05);
+            cursor: pointer;
+        }
+        .bubble {
+            max-width: 85%;
+            padding: 10px 16px;
+            border-radius: 18px;
+            font-size: 16px;
+            line-height: 1.4;
+            color: #000;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            font-weight: 500;
+            white-space: pre-wrap;
+            align-self: flex-start;
+            background-color: var(--bubble-left);
+            border-bottom-left-radius: 4px;
+        }
+        .bubble a { color: var(--link-color); text-decoration: none; font-weight: 700; border-bottom: 1px solid rgba(0, 72, 141, 0.2); white-space: normal; }
+        .bubble .shortcut { color: #e05454; font-family: monospace; background: rgba(0,0,0,0.05); padding: 2px 6px; border-radius: 4px; font-size: 14px; margin-right: 4px; }
+        
+        .chat-view::-webkit-scrollbar { width: 4px; }
+        .chat-view::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.1); border-radius: 10px; }
     </style>
 </head>
 <body>
 
-<div class="card">
-    <h2>Short URL Generator</h2>
-    <input type="url" id="urlInput" placeholder="Paste link (https://...)" required>
-    
-    <div class="btn-group">
-        <button onclick="generate()">Generate</button>
-        <!-- FIX: Absolute path to ensure JSON opens from root directory -->
-        <a href="/shorturl.json" target="_blank" class="secondary-btn">View JSON</a>
-    </div>
+<!-- VIEW 1: Generator Dashboard -->
+<div id="generatorContainer" class="generator-view">
+    <div class="card">
+        <h2>Short URL Generator</h2>
+        <input type="url" id="urlInput" placeholder="Paste link (https://...)" required>
+        
+        <div class="btn-group">
+            <button onclick="generate()">Generate</button>
+            <div onclick="toggleView('links')" class="secondary-btn">View Links</div>
+        </div>
 
-    <div id="outputs" style="display: none;">
-        <div class="output-label">Shareable Link</div>
-        <div class="result-box" id="shareLink" onclick="copyText('shareLink')"></div>
-        <div class="copy-hint">Tap to copy link</div>
+        <div id="outputs" style="display: none;">
+            <div class="output-label">Shareable Link</div>
+            <div class="result-box" id="shareLink" onclick="copyText('shareLink')"></div>
+            <div class="copy-hint">Tap to copy link</div>
 
-        <div class="output-label">JSON Data (Paste to shorturl.json)</div>
-        <div class="result-box" id="jsonLine" onclick="copyText('jsonLine')"></div>
-        <div class="copy-hint">Tap to copy JSON line</div>
+            <div class="output-label">JSON Data (Paste to shorturl.json)</div>
+            <div class="result-box" id="jsonLine" onclick="copyText('jsonLine')"></div>
+            <div class="copy-hint">Tap to copy JSON line</div>
+        </div>
     </div>
 </div>
 
+<!-- VIEW 2: Telegram Chat Interface -->
+<div id="chatContainer" class="chat-view"></div>
+
 <script>
     const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+
+    // Toggle between views seamlessly without breaking history
+    function toggleView(view) {
+        const gen = document.getElementById('generatorContainer');
+        const chat = document.getElementById('chatContainer');
+        
+        if (view === 'links') {
+            gen.style.display = 'none';
+            chat.style.display = 'flex';
+            document.body.style.background = 'var(--bg-chat)';
+            loadChatMessages();
+        } else {
+            chat.style.display = 'none';
+            gen.style.display = 'flex';
+            document.body.style.background = 'var(--bg)';
+        }
+    }
 
     async function generate() {
         const urlInput = document.getElementById('urlInput').value.trim();
@@ -54,11 +152,10 @@
 
         let existingKeys = [];
         try {
-            // FIX: Leading slash ensures it checks the root JSON, bypassing the subfolder
             const response = await fetch('/shorturl.json?t=' + Date.now());
             const data = await response.json();
             existingKeys = Object.keys(data);
-        } catch (e) { console.log("New file setup or root file inaccessible."); }
+        } catch (e) { console.log("New file setup configuration."); }
 
         let code = '';
         let isUnique = false;
@@ -76,11 +173,40 @@
         document.getElementById('jsonLine').innerText = `"${code}": "${urlInput}",`;
     }
 
+    async function loadChatMessages() {
+        const chat = document.getElementById('chatContainer');
+        try {
+            const response = await fetch('/shorturl.json?t=' + Date.now());
+            if (!response.ok) throw new Error("JSON file missing");
+            const data = await response.json();
+            
+            chat.innerHTML = '';
+
+            // Header/Return back badge banner
+            const header = document.createElement('div');
+            header.className = 'service-msg';
+            header.innerText = "← Return to Generator Dashboard";
+            header.onclick = () => toggleView('generator');
+            chat.appendChild(header);
+
+            // Generate clean chat bubbles from the root JSON object
+            Object.keys(data).forEach(key => {
+                const destination = data[key];
+                if (!destination || destination === "https://") return;
+
+                const bubble = document.createElement('div');
+                bubble.className = 'bubble';
+                bubble.innerHTML = `<span class="shortcut">/${key}</span> → <a href="${destination}" target="_blank">${destination}</a>`;
+                chat.appendChild(bubble);
+            });
+            
+        } catch(e) {
+            chat.innerHTML = `<div class="service-msg" onclick="toggleView('generator')">Error loading links. Tap to go back.</div>`;
+        }
+    }
+
     function copyText(id) {
-        // Grab the value before replacing container text with "COPIED!"
         const textData = document.getElementById(id).innerText;
-        
-        // Safety handling if clicked while displaying "COPIED!" status
         if (textData === "COPIED!") return; 
 
         navigator.clipboard.writeText(textData).then(() => {
@@ -92,9 +218,13 @@
                 targetNode.innerText = textData;
                 targetNode.style.color = "";
             }, 800);
-        }).catch(err => {
-            console.error("Failed to copy text: ", err);
         });
+    }
+
+    // Check URL parameters to see if user wants to directly view the list
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('view') === 'links') {
+        toggleView('links');
     }
 </script>
 </body>
