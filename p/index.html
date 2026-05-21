@@ -82,16 +82,15 @@
         .chat-container::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.1); border-radius: 10px; }
     </style>
     <script>
-        // UNIVERSAL ROUTER: Runs instantly before the page components even render
+        // YOUR ORIGINAL WORKING ROUTER LOGIC
         const path = window.location.pathname;
-
-        // If the path is a sub-link ending with a slash (like /p/2fa/ or /p/anything/)
-        if (path.startsWith('/p/') && path.endsWith('/') && path !== '/p/') {
-            // Remove the final slash dynamically
-            const cleanPath = path.slice(0, -1); 
-            
-            // Redirect smoothly to the flat file destination (e.g., /p/2fa)
-            window.location.replace(window.location.origin + cleanPath);
+        if (path.endsWith('/')) {
+            const segments = path.split('/').filter(Boolean);
+            // If they are deep inside a sub-link (e.g., "/p/2fa/" -> segments are ['p', '2fa'])
+            if (segments.length > 1) {
+                const targetPage = segments[1]; // Dynamically grabs '2fa', 'qr', etc.
+                window.location.replace(`/p/${targetPage}`);
+            }
         }
     </script>
 </head>
@@ -102,7 +101,7 @@
     </div>
 
 <script>
-    // Master Registry List
+    // System Applications Registry
     const systemApps = {
         "shorturl": {
             "title": "Short URL Generator Engine",
