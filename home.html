@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="manifest" href="/manifest.json">
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <meta name="theme-color" content="#0b57d0">
+    <title>samy.pro.bd</title>
+    <style>
+        :root { 
+            --bg: #f0f4f9; 
+            --bubble-bg: #ffffff; 
+            --text: #000000; 
+            --subtext: #1a1c1e;
+            --link: #0b57d0; 
+        }
+        body { 
+            background-color: var(--bg); 
+            color: var(--text); 
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; 
+            margin: 0; 
+            display: flex; 
+            justify-content: center; 
+            padding: 24px; 
+            opacity: 0; 
+            transition: opacity 0.4s ease-out; 
+        }
+        .container { 
+            width: 100%; 
+            max-width: 480px; 
+            margin-top: 8vh; 
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .error-code {
+            font-size: 7.5rem;
+            font-weight: 900;
+            line-height: 1;
+            margin: 0;
+            letter-spacing: -2px;
+            display: none;
+        }
+        .error-message {
+            font-size: 1rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--subtext);
+            margin: 24px 0 48px 0;
+            display: none;
+        }
+        .header { 
+            text-align: center; 
+            margin-bottom: 24px; 
+            font-weight: 700; 
+            font-size: 1.8rem; 
+            color: var(--subtext);
+        }
+        .input-wrapper { 
+            background: var(--bubble-bg); 
+            border-radius: 30px; 
+            padding: 6px 16px 6px 24px; 
+            display: flex; 
+            align-items: center; 
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04); 
+            margin-bottom: 32px; 
+            border: 2px solid var(--link); 
+            width: 100%;
+            box-sizing: border-box;
+        }
+        .prefix { 
+            color: #717171; 
+            font-weight: 600; 
+            font-size: 1.05rem;
+            white-space: nowrap; 
+            user-select: none; 
+        }
+        #shortcut-input { 
+            border: none; 
+            outline: none; 
+            padding: 14px 4px; 
+            font-size: 1.05rem; 
+            font-weight: 600; 
+            width: 100%; 
+            background: transparent; 
+            color: #717171; 
+        }
+        .go-btn { 
+            background: var(--link); 
+            color: white; 
+            border: none; 
+            padding: 10px 20px; 
+            border-radius: 20px; 
+            font-weight: 800; 
+            cursor: pointer; 
+            display: none; 
+            margin-left: 8px;
+        }
+        #content-list { width: 100%; }
+        .bubble { 
+            background: var(--bubble-bg); 
+            padding: 20px 24px; 
+            border-radius: 24px; 
+            margin-bottom: 16px; 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05); 
+            border: 1px solid rgba(0,0,0,0.02); 
+            word-break: break-all; 
+            line-height: 1.5; 
+            font-weight: 700; 
+            transition: transform 0.1s ease; 
+            position: relative; 
+            white-space: pre-wrap; 
+        }
+        .bubble.fullclickable { cursor: pointer; }
+        .bubble.fullclickable:active { transform: scale(0.97); }
+        .bubble.fullclickable a { pointer-events: none; }
+        .bubble a { color: var(--link); text-decoration: none; border-bottom: 1.5px solid rgba(11, 87, 208, 0.1); }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1 id="404-code" class="error-code">404</h1>
+    <div id="404-message" class="error-message">Sorry, page not found.</div>
+    
+    <div id="page-title" class="header">samy.pro.bd</div>
+    
+    <div class="input-wrapper">
+        <span class="prefix">samy.pro.bd/</span>
+        <input type="text" id="shortcut-input" placeholder="......" autocomplete="off" autocapitalize="none" spellcheck="false" inputmode="url">
+        <button id="go-button" class="go-btn">Go</button>
+    </div>
+    
+    <div id="content-list"></div>
+</div>
+
+<script>
+    const rawPath = window.location.pathname;
+    const pathSegments = rawPath.split('/').filter(p => p);
+    const listDiv = document.getElementById('content-list');
+    const inputField = document.getElementById('shortcut-input');
+    const goButton = document.getElementById('go-button');
+    const urlRegex = /(https?:\/\/[^\s]+)/g;
+
+    const errorCodeEl = document.getElementById('404-code');
+    const errorMessageEl = document.getElementById('404-message');
+
+    function doRedirect() {
+        const val = inputField.value.trim().toLowerCase();
+        if (val) window.location.href = '/' + val;
+    }
+
+    inputField.addEventListener('input', () => {
+        goButton.style.display = inputField.value.trim() ? 'block' : 'none';
+    });
+
+    inputField.addEventListener('keypress', (e) => { if (e.key === 'Enter') doRedirect(); });
+    goButton.addEventListener('click', doRedirect);
+
+    async function init() {
+        // 1. Pass through routing rule for 2FA profiles
+        if (pathSegments.length > 0 && pathSegments[0].toLowerCase() === '2fa') {
+            const secret = pathSegments.slice(1).join('/');
+            const hash = window.location.hash;
+            window.location.replace("https://2fa.samy.pro.bd/" + secret + hash);
+            return;
+        }
+
+        // 2. Clear out trailing slashes to keep route matching clean
+        if (rawPath.endsWith('/') && rawPath.length > 1 && pathSegments[0]?.toLowerCase() !== 'p') {
+            window.location.replace(rawPath.slice(0, -1));
+            return;
+        }
+
+        try {
+            // Evaluates root domains or standalone PWA asset configurations natively
+            if (pathSegments.length === 0 || pathSegments[0].toLowerCase() === 'index.html') {
+                hide404Elements();
+                const res = await fetch('/homepage.json');
+                renderBubbles(await res.json());
+            } 
+            else if (pathSegments[0].toLowerCase() === 'p' && pathSegments[1]) {
+                const res = await fetch('/shorturl.json');
+                const shorts = await res.json();
+                const slug = pathSegments[1].toLowerCase();
+                if (shorts[slug]) { window.location.replace(shorts[slug]); return; }
+                showError();
+            }
+            else {
+                const res = await fetch('/redirect.json');
+                const redirects = await res.json();
+                const key = pathSegments[0].toLowerCase();
+                if (redirects[key]) { window.location.replace(redirects[key]); return; }
+                showError();
+            }
+        } catch (err) { 
+            if (pathSegments.length === 0 || pathSegments[0].toLowerCase() === 'index.html') {
+                hide404Elements();
+            } else {
+                showError();
+            }
+        } finally {
+            document.body.style.opacity = "1";
+        }
+    }
+
+    function hide404Elements() {
+        errorCodeEl.style.display = 'none';
+        errorMessageEl.style.display = 'none';
+    }
+
+    function showError() {
+        errorCodeEl.style.display = 'block';
+        errorMessageEl.style.display = 'block';
+    }
+
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    function renderBubbles(data) {
+        data.forEach(item => {
+            const div = document.createElement('div');
+            div.className = 'bubble';
+            const content = typeof item === 'string' ? item : item.text;
+            
+            const linkMatches = content.match(urlRegex);
+            if (linkMatches && linkMatches.length === 1) {
+                div.classList.add('fullclickable');
+                div.onclick = () => window.location.href = linkMatches[0];
+            }
+            
+            const safeContent = escapeHtml(content);
+            div.innerHTML = safeContent.replace(urlRegex, url => `<a href="${url}">${url}</a>`);
+            listDiv.appendChild(div);
+        });
+    }
+
+    init();
+
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/sw.js').catch(() => {
+            console.log("Service Worker optional for this build.");
+        });
+    }
+</script>
+</body>
+</html>
