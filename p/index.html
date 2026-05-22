@@ -6,7 +6,7 @@
     <title>Samy - System Hub</title>
     <style>
         :root {
-            --bg-color: #e1dbd6; 
+            --bg-color: #e7ebf0;
             --bubble-left: #ffffff;
             --link-color: #00488d;
         }
@@ -75,69 +75,46 @@
             border-radius: 4px;
             font-size: 14px;
             margin-right: 4px;
-            font-weight: bold;
         }
 
         .chat-container::-webkit-scrollbar { width: 4px; }
         .chat-container::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.1); border-radius: 10px; }
     </style>
     <script>
-        // SMART FIX: Appends .html to force GitHub Pages to serve the flat file instantly
+        // SMART ROUTER LOGIC: Fixes the trailing slash issue automatically!
+        // If a user accesses /p/shorturl/ or /p/redirectlist/, this script grabs it,
+        // cleans it up, and sends them directly to the matching .html file.
         const path = window.location.pathname;
         if (path.endsWith('/')) {
             const segments = path.split('/').filter(Boolean);
+            // If they are deeper than just "/p/" (e.g., "/p/shorturl/")
             if (segments.length > 1) {
-                const targetPage = segments[1]; 
-                // FIXED: Explicitly direct to the .html file to completely stop slash loops
-                window.location.replace(`/p/${targetPage}.html`);
+                const targetPage = segments[1]; // Get 'shorturl' or 'redirectlist'
+                window.location.replace(`/p/${targetPage}`);
             }
         }
     </script>
 </head>
 <body>
 
-    <div id="hubContainer" class="chat-container">
+    <div class="chat-container">
         <div class="service-msg">System Applications Channel</div>
+
+        <div class="bubble">
+            <span class="shortcut">/shorturl</span> → Launch the 
+            <a href="/p/shorturl">Short URL Generator Engine</a> to compress links and manage your JSON parameters.
+        </div>
+
+        <div class="bubble">
+            <span class="shortcut">/redirectlist</span> → Open the 
+            <a href="/p/redirectlist">Active Redirect Hub Feed</a> to browse live configuration short links.
+        </div>
+
+        <div class="bubble">
+            <span class="shortcut">/qr</span> → Open the 
+            <a href="/p/qr">QR Code Generator Utility</a>.
+        </div>
     </div>
 
-<script>
-    const systemApps = {
-        "shorturl": {
-            "title": "Short URL Generator Engine",
-            "desc": "Compress static links and manage active JSON redirect objects."
-        },
-        "redirectlist": {
-            "title": "Active Redirect Hub Feed",
-            "desc": "Browse your complete database of active runtime redirect maps."
-        },
-        "qr": {
-            "title": "QR Code Generator Utility",
-            "desc": "Generate instant clean quick-response matrix bars."
-        },
-        "2fa": {
-            "title": "Two-Factor Authentication Tool",
-            "desc": "Manage encrypted local profile TOTP keys cleanly from the cloud sandbox."
-        }
-    };
-
-    function renderHub() {
-        const container = document.getElementById('hubContainer');
-        
-        Object.keys(systemApps).forEach(key => {
-            const app = systemApps[key];
-            const bubble = document.createElement('div');
-            bubble.className = 'bubble';
-            
-            // Keep clean URLs for the link tags
-            bubble.innerHTML = `
-                <span class="shortcut">/${key}</span> → Launch the 
-                <a href="/p/${key}">${app.title}</a> to ${app.desc}
-            `;
-            container.appendChild(bubble);
-        });
-    }
-
-    renderHub();
-</script>
 </body>
 </html>
