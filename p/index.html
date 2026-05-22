@@ -81,40 +81,81 @@
         .chat-container::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.1); border-radius: 10px; }
     </style>
     <script>
-        // SMART ROUTER LOGIC: Fixes the trailing slash issue automatically!
-        // If a user accesses /p/shorturl/ or /p/redirectlist/, this script grabs it,
-        // cleans it up, and sends them directly to the matching .html file.
+        // SMART ROUTER LOGIC: Handles trailing slash normalization
         const path = window.location.pathname;
         if (path.endsWith('/')) {
             const segments = path.split('/').filter(Boolean);
-            // If they are deeper than just "/p/" (e.g., "/p/shorturl/")
             if (segments.length > 1) {
-                const targetPage = segments[1]; // Get 'shorturl' or 'redirectlist'
-                window.location.replace(`/p/${targetPage}`);
+                window.location.replace(`/p/${segments[1]}`);
             }
         }
     </script>
 </head>
 <body>
 
-    <div class="chat-container">
+    <div class="chat-container" id="hubContainer">
         <div class="service-msg">System Applications Channel</div>
-
-        <div class="bubble">
-            <span class="shortcut">/shorturl</span> → Launch the 
-            <a href="/p/shorturl">Short URL Generator Engine</a> to compress links and manage your JSON parameters.
-        </div>
-
-        <div class="bubble">
-            <span class="shortcut">/redirectlist</span> → Open the 
-            <a href="/p/redirectlist">Active Redirect Hub Feed</a> to browse live configuration short links.
-        </div>
-
-        <div class="bubble">
-            <span class="shortcut">/qr</span> → Open the 
-            <a href="/p/qr">QR Code Generator Utility</a>.
-        </div>
+        <!-- Dynamic chat bubbles will generate right here -->
     </div>
+
+
+    <!-- DATA CONFIGURATION BLOCK -->
+    <!-- Simply add or remove links in the array below to update the channel list instantly -->
+    <script>
+        const SYSTEM_PAGES = [
+            { slug: "shorturl", title: "Short URL Generator Engine", desc: "to compress links and manage your JSON parameters" },
+            
+
+
+
+
+
+
+
+
+
+{ slug: "redirectlist", title: "Active Redirect Hub Feed", desc: "to browse live configuration short links" },
+            { slug: "qr", title: "QR Code Generator", desc: "" },
+            { slug: "example", title: "Dynamic Sandbox Module", desc: "to run automated routing tests" }
+        ];
+
+       
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ document.addEventListener('DOMContentLoaded', () => {
+            const container = document.getElementById('hubContainer');
+            
+            SYSTEM_PAGES.forEach(page => {
+                const bubble = document.createElement('div');
+                bubble.className = 'bubble';
+                
+                // Construct string cleanly with checking for description values
+                const descriptionText = page.desc ? ` ${page.desc}` : '';
+                bubble.innerHTML = `<span class="shortcut">/${page.slug}</span> → Launch the <a href="/p/${page.slug}">${page.title}</a>${descriptionText}.`;
+                
+                container.appendChild(bubble);
+            });
+        });
+    </script>
 
 </body>
 </html>
