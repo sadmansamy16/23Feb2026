@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SADMAN SAMY</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --bg-gradient: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            --card-bg: rgba(255, 255, 255, 0.85);
+            --text-main: #1f2937;
+            --text-muted: #4b5563;
+            --border-color: rgba(229, 231, 235, 0.5);
+            
+            /* Brand Colors */
+            --wa-color: #25D366;
+            --fb-color: #1877F2;
+            --ig-color: #E4405F;
+            --x-color: #000000;
+            --yt-color: #FF0000;
+            --mail-color: #EA4335;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background: var(--bg-gradient);
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-sizing: border-box;
+        }
+
+        /* Top Right Home Button */
+        .home-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 45px;
+            height: 45px;
+            background: #ffffff;
+            border: 1px solid var(--border-color);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: var(--text-main);
+            text-decoration: none;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            transition: all 0.3s ease;
+            z-index: 100;
+        }
+        .home-btn:hover {
+            transform: scale(1.08);
+            background: var(--text-main);
+            color: #ffffff;
+        }
+
+        /* Main Card Container */
+        .card-container {
+            width: 100%;
+            max-width: 440px;
+            margin: 60px 20px;
+            padding: 40px 30px;
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.06);
+            border: 1px solid rgba(255,255,255,0.6);
+            text-align: center;
+        }
+        
+        /* Profile Section */
+        .profile-section { 
+            margin-bottom: 35px; 
+        }
+        .profile-avatar {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 5px solid #fff;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+            margin-bottom: 15px;
+        }
+        .profile-name {
+            font-size: 26px;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            margin: 0;
+        }
+        .profile-location {
+            font-size: 14px;
+            color: var(--text-muted);
+            margin-top: 6px;
+            font-weight: 500;
+        }
+        .profile-location i {
+            margin-right: 4px;
+            color: #ef4444;
+        }
+
+        /* Links Layout */
+        .links-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+        .contact-box {
+            display: flex;
+            align-items: center;
+            padding: 16px 20px;
+            background: #FFFFFF;
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            text-decoration: none;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        /* Brand Icon Styling Inside Button */
+        .contact-box .brand-icon {
+            font-size: 22px;
+            width: 35px;
+            display: flex;
+            justify-content: flex-start;
+            color: var(--text-muted);
+            transition: color 0.3s ease;
+        }
+        
+        .button-text {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        .label {
+            font-size: 11px;
+            font-weight: 700;
+            color: #9CA3AF;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            margin-bottom: 2px;
+            transition: color 0.3s ease;
+        }
+        .value {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        /* Hover Effects */
+        .contact-box:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 24px rgba(0,0,0,0.06);
+            border-color: var(--text-main);
+        }
+
+        /* Custom Hover Colors for Branding */
+        .wa:hover { border-color: var(--wa-color); }
+        .wa:hover .brand-icon, .wa:hover .label { color: var(--wa-color); }
+
+        .fb:hover { border-color: var(--fb-color); }
+        .fb:hover .brand-icon, .fb:hover .label { color: var(--fb-color); }
+
+        .ig:hover { border-color: var(--ig-color); }
+        .ig:hover .brand-icon, .ig:hover .label { color: var(--ig-color); }
+
+        .x-site:hover { border-color: var(--x-color); }
+        .x-site:hover .brand-icon, .x-site:hover .label { color: var(--x-color); }
+
+        .yt:hover { border-color: var(--yt-color); }
+        .yt:hover .brand-icon, .yt:hover .label { color: var(--yt-color); }
+
+        .mail:hover { border-color: var(--mail-color); }
+        .mail:hover .brand-icon, .mail:hover .label { color: var(--mail-color); }
+    </style>
+</head>
+<body>
+
+    <a href="#" class="home-btn" title="Home">
+        <i class="fa-solid fa-house"></i>
+    </a>
+
+    <div class="card-container">
+        
+        <div class="profile-section">
+            <img class="profile-avatar" src="https://blogger.googleusercontent.com/img/a/AVvXsEi7x_YrBwRo0uBt9ZxzI4ZPN-nI-TlzV_4zbd-iAjh-7GflYvO3rT-PyMz9oaFEonIvUgy-wKcW8uhoGqMHTKkmErzudJFg-I7B3lytJGYaAHhKsGWBLUOcB51FPmS2JZk2Mm2F9b7J13mPF48s9z4xLl9K9L2ODrkk5pWCJPrcIvsGmL7KYZlMUbrYBqqv" alt="Sadman Samy Profile">
+            <h1 class="profile-name">SADMAN SAMY</h1>
+            <p class="profile-location"><i class="fa-solid fa-location-dot"></i> Konabari, Gazipur, Bangladesh</p>
+        </div>
+
+        <div class="links-grid">
+            <a class="contact-box wa" href="https://wa.me/8801611689999" target="_blank">
+                <div class="brand-icon"><i class="fa-brands fa-whatsapp"></i></div>
+                <div class="button-text">
+                    <span class="label">WhatsApp / Mobile</span>
+                    <span class="value">01611689999</span>
+                </div>
+            </a>
+
+            <a class="contact-box fb" href="https://facebook.com/sadmansamyy" target="_blank">
+                <div class="brand-icon"><i class="fa-brands fa-facebook-f"></i></div>
+                <div class="button-text">
+                    <span class="label">Facebook</span>
+                    <span class="value">sadmansamyy</span>
+                </div>
+            </a>
+
+            <a class="contact-box ig" href="https://instagram.com/sadmansamyy" target="_blank">
+                <div class="brand-icon"><i class="fa-brands fa-instagram"></i></div>
+                <div class="button-text">
+                    <span class="label">Instagram</span>
+                    <span class="value">sadmansamyy</span>
+                </div>
+            </a>
+
+            <a class="contact-box x-site" href="https://x.com/sadmansamyy" target="_blank">
+                <div class="brand-icon"><i class="fa-brands fa-x-twitter"></i></div>
+                <div class="button-text">
+                    <span class="label">X (Twitter)</span>
+                    <span class="value">sadmansamyy</span>
+                </div>
+            </a>
+
+            <a class="contact-box yt" href="https://youtube.com/@sadmansamyy" target="_blank">
+                <div class="brand-icon"><i class="fa-brands fa-youtube"></i></div>
+                <div class="button-text">
+                    <span class="label">YouTube</span>
+                    <span class="value">sadmansamyy</span>
+                </div>
+            </a>
+
+            <a class="contact-box mail" href="mailto:i@samy.pro.bd">
+                <div class="brand-icon"><i class="fa-regular fa-envelope"></i></div>
+                <div class="button-text">
+                    <span class="label">Professional Email</span>
+                    <span class="value">i@samy.pro.bd</span>
+                </div>
+            </a>
+
+            <a class="contact-box mail" href="mailto:sadmansamyy@gmail.com">
+                <div class="brand-icon"><i class="fa-solid fa-envelope-open-text"></i></div>
+                <div class="button-text">
+                    <span class="label">Personal Email</span>
+                    <span class="value">sadmansamyy@gmail.com</span>
+                </div>
+            </a>
+        </div>
+
+    </div>
+
+</body>
+</html>
