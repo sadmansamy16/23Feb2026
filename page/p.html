@@ -10,10 +10,10 @@
     <style>
         :root {
             --bg-gradient: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-            --card-bg: rgba(255, 255, 255, 0.85);
+            --card-bg: rgba(255, 255, 255, 0.95);
             --text-main: #1f2937;
             --text-muted: #4b5563;
-            --border-color: rgba(229, 231, 235, 0.5);
+            --border-color: rgba(229, 231, 235, 0.7);
             
             /* Brand Colors */
             --wa-color: #25D366;
@@ -37,14 +37,29 @@
             box-sizing: border-box;
         }
 
-        /* Top Right Home Button */
+        /* Main Card Container */
+        .card-container {
+            position: relative; /* Crucial for positioning the home button properly */
+            width: 100%;
+            max-width: 440px;
+            margin: 40px 20px;
+            padding: 40px 24px;
+            background: var(--card-bg);
+            border-radius: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.06);
+            border: 1px solid rgba(255,255,255,0.6);
+            text-align: center;
+            box-sizing: border-box;
+        }
+
+        /* Fixed Top Right Home Button */
         .home-btn {
             position: absolute;
-            top: 20px;
-            right: 20px;
-            width: 45px;
-            height: 45px;
-            background: #ffffff;
+            top: 24px;
+            right: 24px;
+            width: 42px;
+            height: 42px;
+            background: #f3f4f6;
             border: 1px solid var(--border-color);
             border-radius: 50%;
             display: flex;
@@ -52,33 +67,19 @@
             align-items: center;
             color: var(--text-main);
             text-decoration: none;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-            transition: all 0.3s ease;
-            z-index: 100;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.04);
+            transition: all 0.2s ease;
+            z-index: 10;
         }
         .home-btn:hover {
-            transform: scale(1.08);
+            transform: scale(1.05);
             background: var(--text-main);
             color: #ffffff;
-        }
-
-        /* Main Card Container */
-        .card-container {
-            width: 100%;
-            max-width: 440px;
-            margin: 60px 20px;
-            padding: 40px 30px;
-            background: var(--card-bg);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border-radius: 30px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.06);
-            border: 1px solid rgba(255,255,255,0.6);
-            text-align: center;
         }
         
         /* Profile Section */
         .profile-section { 
+            margin-top: 15px;
             margin-bottom: 35px; 
         }
         .profile-avatar {
@@ -121,19 +122,26 @@
             border: 1px solid var(--border-color);
             border-radius: 20px;
             text-decoration: none;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            position: relative;
-            overflow: hidden;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
         }
         
-        /* Brand Icon Styling Inside Button */
+        /* Brand Icon Wrapper */
         .contact-box .brand-icon {
             font-size: 22px;
             width: 35px;
             display: flex;
             justify-content: flex-start;
+            align-items: center;
             color: var(--text-muted);
-            transition: color 0.3s ease;
+            transition: color 0.25s ease;
+        }
+
+        /* SVG X Icon sizing fallback */
+        .contact-box .brand-icon svg {
+            width: 20px;
+            height: 20px;
+            fill: var(--text-muted);
+            transition: fill 0.25s ease;
         }
         
         .button-text {
@@ -148,7 +156,7 @@
             text-transform: uppercase;
             letter-spacing: 0.8px;
             margin-bottom: 2px;
-            transition: color 0.3s ease;
+            transition: color 0.25s ease;
         }
         .value {
             font-size: 15px;
@@ -158,8 +166,8 @@
 
         /* Hover Effects */
         .contact-box:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 12px 24px rgba(0,0,0,0.06);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.04);
             border-color: var(--text-main);
         }
 
@@ -174,7 +182,8 @@
         .ig:hover .brand-icon, .ig:hover .label { color: var(--ig-color); }
 
         .x-site:hover { border-color: var(--x-color); }
-        .x-site:hover .brand-icon, .x-site:hover .label { color: var(--x-color); }
+        .x-site:hover .brand-icon .label { color: var(--x-color); }
+        .x-site:hover .brand-icon svg { fill: var(--x-color); }
 
         .yt:hover { border-color: var(--yt-color); }
         .yt:hover .brand-icon, .yt:hover .label { color: var(--yt-color); }
@@ -185,12 +194,12 @@
 </head>
 <body>
 
-    <a href="/home" class="home-btn" title="Home">
-        <i class="fa-solid fa-house"></i>
-    </a>
-
     <div class="card-container">
         
+        <a href="/home" class="home-btn" title="Home">
+            <i class="fa-solid fa-house"></i>
+        </a>
+
         <div class="profile-section">
             <img class="profile-avatar" src="https://blogger.googleusercontent.com/img/a/AVvXsEi7x_YrBwRo0uBt9ZxzI4ZPN-nI-TlzV_4zbd-iAjh-7GflYvO3rT-PyMz9oaFEonIvUgy-wKcW8uhoGqMHTKkmErzudJFg-I7B3lytJGYaAHhKsGWBLUOcB51FPmS2JZk2Mm2F9b7J13mPF48s9z4xLl9K9L2ODrkk5pWCJPrcIvsGmL7KYZlMUbrYBqqv" alt="Sadman Samy Profile">
             <h1 class="profile-name">SADMAN SAMY</h1>
@@ -223,7 +232,9 @@
             </a>
 
             <a class="contact-box x-site" href="https://x.com/sadmansamyy" target="_blank">
-                <div class="brand-icon"><i class="fa-brands fa-x-twitter"></i></div>
+                <div class="brand-icon">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"></path></svg>
+                </div>
                 <div class="button-text">
                     <span class="label">X (Twitter)</span>
                     <span class="value">sadmansamyy</span>
