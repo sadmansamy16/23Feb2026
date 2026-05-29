@@ -82,42 +82,14 @@
             background: var(--text-main);
             color: #ffffff;
         }
-
-        /* Box-Shaped Save Contact Text Button (Top Left) */
-        .vcard-text-btn {
-            position: absolute;
-            top: 24px;
-            left: 24px;
-            height: 42px;
-            padding: 0 16px;
-            background: var(--vcard-color);
-            border: 1px solid var(--vcard-color);
-            border-radius: 12px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 8px;
-            color: #ffffff;
-            text-decoration: none;
-            font-size: 11px;
-            font-weight: 700;
-            letter-spacing: 0.8px;
-            text-transform: uppercase;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
-            transition: all 0.2s ease;
-            z-index: 10;
-        }
-        .vcard-text-btn:hover {
-            transform: scale(1.03);
-            background: #ffffff;
-            color: var(--vcard-color);
-            border-color: var(--vcard-color);
-        }
         
         /* Profile Section */
         .profile-section { 
-            margin-top: 25px; /* Added extra space since text button is wider than the circle icon */
-            margin-bottom: 35px; 
+            margin-top: 15px;
+            margin-bottom: 30px; 
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
         .profile-avatar {
             width: 120px;
@@ -138,11 +110,65 @@
             font-size: 14px;
             color: var(--text-muted);
             margin-top: 6px;
+            margin-bottom: 20px;
             font-weight: 500;
         }
         .profile-location i {
             margin-right: 4px;
             color: #ef4444;
+        }
+
+        /* Facebook Style Action Row Bar */
+        .fb-action-bar {
+            display: flex;
+            width: 90%;
+            gap: 10px;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* Big Action Button (Left side) */
+        .fb-btn-primary {
+            flex: 1;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            height: 44px;
+            background: var(--vcard-color);
+            color: #ffffff;
+            text-decoration: none;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 14px;
+            box-shadow: 0 4px 12px rgba(17, 24, 39, 0.15);
+            transition: all 0.2s ease;
+            border: 1px solid var(--vcard-color);
+        }
+        .fb-btn-primary:hover {
+            background: #1f2937;
+            transform: translateY(-1px);
+        }
+
+        /* Small Square Action Icon Button (Right side) */
+        .fb-btn-secondary {
+            width: 44px;
+            height: 44px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: #f3f4f6;
+            color: var(--text-main);
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.04);
+            transition: all 0.2s ease;
+            font-size: 16px;
+        }
+        .fb-btn-secondary:hover {
+            background: #e5e7eb;
+            transform: translateY(-1px);
         }
 
         /* Links Layout */
@@ -201,7 +227,6 @@
             color: var(--text-main);
         }
 
-        /* Hover Effects */
         .contact-box:hover {
             transform: translateY(-2px);
             box-shadow: 0 10px 20px rgba(0,0,0,0.04);
@@ -211,25 +236,24 @@
         /* Brand Colors on Hover */
         .wa:hover { border-color: var(--wa-color); }
         .wa:hover .brand-icon, .wa:hover .label { color: var(--wa-color); }
-
         .phone:hover { border-color: var(--phone-color); }
         .phone:hover .brand-icon, .phone:hover .label { color: var(--phone-color); }
-
         .fb:hover { border-color: var(--fb-color); }
         .fb:hover .brand-icon, .fb:hover .label { color: var(--fb-color); }
-
         .ig:hover { border-color: var(--ig-color); }
         .ig:hover .brand-icon, .ig:hover .label { color: var(--ig-color); }
-
         .x-site:hover { border-color: var(--x-color); }
         .x-site:hover .label { color: var(--x-color); }
         .x-site:hover .brand-icon svg { fill: var(--x-color); }
-
         .yt:hover { border-color: var(--yt-color); }
         .yt:hover .brand-icon, .yt:hover .label { color: var(--yt-color); }
-
         .mail:hover { border-color: var(--mail-color); }
         .mail:hover .brand-icon, .mail:hover .label { color: var(--mail-color); }
+
+        /* Force-hide Intergram standard chat-bubble launcher globally */
+        #intergramRoot .intergram-chat-closed {
+            display: none !important;
+        }
 
         /* Mobile Optimization */
         @media screen and (max-width: 480px) {
@@ -251,10 +275,6 @@
                 top: 20px;
                 right: 20px;
             }
-            .vcard-text-btn {
-                top: 20px;
-                left: 20px;
-            }
         }
     </style>
 </head>
@@ -262,13 +282,6 @@
 
     <div class="card-container">
         
-        <!-- Box-Shaped Save Contact Text Button (Top Left) -->
-        <a href="sadman_samy.vcf" download="Sadman_Samy.vcf" class="vcard-text-btn" title="Save Contact">
-            <i class="fa-solid fa-user-plus"></i>
-            <span>Save Contact</span>
-        </a>
-
-        <!-- Home Button (Top Right) -->
         <a href="/home" class="home-btn" title="Home">
             <i class="fa-solid fa-house"></i>
         </a>
@@ -277,10 +290,18 @@
             <img class="profile-avatar" src="https://blogger.googleusercontent.com/img/a/AVvXsEi7x_YrBwRo0uBt9ZxzI4ZPN-nI-TlzV_4zbd-iAjh-7GflYvO3rT-PyMz9oaFEonIvUgy-wKcW8uhoGqMHTKkmErzudJFg-I7B3lytJGYaAHhKsGWBLUOcB51FPmS2JZk2Mm2F9b7J13mPF48s9z4xLl9K9L2ODrkk5pWCJPrcIvsGmL7KYZlMUbrYBqqv" alt="Sadman Samy Profile">
             <h1 class="profile-name">SADMAN SAMY</h1>
             <p class="profile-location"><i class="fa-solid fa-location-dot"></i> Konabari, Gazipur, Bangladesh</p>
+            
+            <div class="fb-action-bar">
+                <a href="sadman_samy.vcf" download="sadman_samy.vcf" class="fb-btn-primary">
+                    <i class="fa-solid fa-user-plus"></i> Save Contact
+                </a>
+                <button class="fb-btn-secondary" id="customMessageBtn" title="Message Direct">
+                    <i class="fa-regular fa-comment-dots"></i>
+                </button>
+            </div>
         </div>
 
         <div class="links-grid">
-            
             <a class="contact-box phone" href="tel:+8801611689999">
                 <div class="brand-icon"><i class="fa-solid fa-phone"></i></div>
                 <div class="button-text">
@@ -347,8 +368,37 @@
                 </div>
             </a>
         </div>
-
     </div>
 
+    <script>
+        // Your Exact Profile Target Chat ID
+        window.intergramId = "6003288214"; 
+        
+        // Active Bot API Token Keys Line
+        window.intergramBotToken = "6241716507:AAEtFZhGQv-MIB7L_KpbNY-RRlv4QnQBno4";
+
+        window.intergramCustomizations = {
+            titleClosed: 'Chat with me!',
+            titleOpen: 'Direct Message',
+            introMessage: 'Hi! Type your name and message here to chat directly with Samy.',
+            autoResponse: 'Message sent! Stay on this page, Samy will reply live right here.',
+            mainColor: '#111827', 
+            alwaysUseFloatingButton: false 
+        };
+
+        // Custom launcher event logic syncing button container to widget frame
+        document.getElementById('customMessageBtn').addEventListener('click', function() {
+            const intergramOpenButton = document.querySelector('#intergramRoot .intergram-chat-closed');
+            const intergramOpenedPanel = document.querySelector('#intergramRoot .intergram-chat-opened');
+            
+            if (intergramOpenButton) {
+                intergramOpenButton.click();
+            } else if (intergramOpenedPanel) {
+                const closeBtn = intergramOpenedPanel.querySelector('div h1').nextSibling || intergramOpenedPanel.querySelector('button');
+                if (closeBtn) closeBtn.click();
+            }
+        });
+    </script>
+    <script id="intergram" type="text/javascript" src="https://www.intergram.xyz/js/widget.js"></script>
 </body>
 </html>
