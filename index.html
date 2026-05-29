@@ -82,32 +82,6 @@
             background: var(--text-main);
             color: #ffffff;
         }
-
-        /* Top Left Save Contact Button (Black Color Theme) */
-        .vcard-btn {
-            position: absolute;
-            top: 24px;
-            left: 24px;
-            width: 42px;
-            height: 42px;
-            background: var(--vcard-color);
-            border: 1px solid var(--vcard-color);
-            border-radius: 50%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            color: #ffffff;
-            text-decoration: none;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
-            transition: all 0.2s ease;
-            z-index: 10;
-        }
-        .vcard-btn:hover {
-            transform: scale(1.05);
-            background: #ffffff;
-            color: var(--vcard-color);
-            border-color: var(--border-color);
-        }
         
         /* Profile Section */
         .profile-section { 
@@ -204,6 +178,9 @@
         }
 
         /* Brand Colors on Hover */
+        .vcard:hover { border-color: var(--vcard-color); }
+        .vcard:hover .brand-icon, .vcard:hover .label { color: var(--vcard-color); }
+
         .wa:hover { border-color: var(--wa-color); }
         .wa:hover .brand-icon, .wa:hover .label { color: var(--wa-color); }
 
@@ -246,10 +223,6 @@
                 top: 20px;
                 right: 20px;
             }
-            .vcard-btn {
-                top: 20px;
-                left: 20px;
-            }
         }
     </style>
 </head>
@@ -257,11 +230,6 @@
 
     <div class="card-container">
         
-        <!-- Save Contact Button (Top Left) -->
-        <a href="sadman_samy.vcf" download="Sadman_Samy.vcf" class="vcard-btn" title="Save Contact">
-            <i class="fa-solid fa-user-plus"></i>
-        </a>
-
         <!-- Home Button (Top Right) -->
         <a href="/home" class="home-btn" title="Home">
             <i class="fa-solid fa-house"></i>
@@ -275,6 +243,15 @@
 
         <div class="links-grid">
             
+            <!-- Big Save Contact Button (Appears First) -->
+            <a class="contact-box vcard" href="sadman_samy.vcf" download="sadman_samy.vcf">
+                <div class="brand-icon"><i class="fa-solid fa-user-plus"></i></div>
+                <div class="button-text">
+                    <span class="label">Save Contact</span>
+                    <span class="value">Download vCard Profile</span>
+                </div>
+            </a>
+
             <a class="contact-box phone" href="tel:+8801611689999">
                 <div class="brand-icon"><i class="fa-solid fa-phone"></i></div>
                 <div class="button-text">
