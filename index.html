@@ -118,7 +118,7 @@
             color: #ef4444;
         }
 
-        /* Action Row Bar - Keeps buttons side-by-side */
+        /* Action Row Bar - Keeps elements side-by-side */
         .fb-action-bar {
             display: flex;
             width: 90%;
@@ -150,7 +150,7 @@
             transform: translateY(-1px);
         }
 
-        /* Message Button - Placed cleanly beside Save Contact */
+        /* Message Button - Perfectly locked beside Save Contact */
         .fb-btn-secondary {
             width: 44px;
             height: 44px;
@@ -245,12 +245,12 @@
         .mail:hover { border-color: var(--mail-color); }
         .mail:hover .brand-icon, .mail:hover .label { color: var(--mail-color); }
 
-        /* Hides the default bottom floating chat bubble icon from Intergram */
+        /* Force hide the default bottom right floating round chat launcher bubble */
         #intergramRoot .intergram-chat-closed {
             display: none !important;
         }
 
-        /* Mobile Adjustments */
+        /* Mobile Optimization */
         @media screen and (max-width: 480px) {
             body {
                 background: #ffffff;
@@ -278,25 +278,24 @@
             <i class="fa-solid fa-house"></i>
         </a>
 
-        <!-- Profile Header -->
+        <!-- Profile Section -->
         <div class="profile-section">
             <img class="profile-avatar" src="https://blogger.googleusercontent.com/img/a/AVvXsEi7x_YrBwRo0uBt9ZxzI4ZPN-nI-TlzV_4zbd-iAjh-7GflYvO3rT-PyMz9oaFEonIvUgy-wKcW8uhoGqMHTKkmErzudJFg-I7B3lytJGYaAHhKsGWBLUOcB51FPmS2JZk2Mm2F9b7J13mPF48s9z4xLl9K9L2ODrkk5pWCJPrcIvsGmL7KYZlMUbrYBqqv" alt="Sadman Samy Profile">
             <h1 class="profile-name">SADMAN SAMY</h1>
             <p class="profile-location"><i class="fa-solid fa-location-dot"></i> Konabari, Gazipur, Bangladesh</p>
             
-            <!-- Side-by-Side Button Bar -->
+            <!-- Side-by-Side Action Row Bar -->
             <div class="fb-action-bar">
                 <a href="sadman_samy.vcf" download="Sadman_Samy.vcf" class="fb-btn-primary">
                     <i class="fa-solid fa-user-plus"></i> Save Contact
                 </a>
-                <!-- Clicking this triggers the Intergram chat window -->
                 <button class="fb-btn-secondary" id="customMessageBtn" title="Message Direct">
                     <i class="fa-regular fa-comment-dots"></i>
                 </button>
             </div>
         </div>
 
-        <!-- Grid Links -->
+        <!-- Links Grid Layout -->
         <div class="links-grid">
             <a class="contact-box phone" href="tel:+8801611689999">
                 <div class="brand-icon"><i class="fa-solid fa-phone"></i></div>
@@ -366,22 +365,21 @@
         </div>
     </div>
 
-    <!-- Live Two-Way Configuration Logic -->
+    <!-- Live Intergram Two-Way Script Integration -->
     <script>
-        // Verified ID from Screenshot_2026-05-29-18-00-29-387_org.telegram.messenger.jpg
+        // Set your exact unique chat ID from the Intergram bot screenshot
         window.intergramId = "6003288214"; 
-        window.intergramBotToken = "6241716507:AAEtFZhGQv-MIB7L_KpbNY-RRlv4QnQBno4";
 
         window.intergramCustomizations = {
             titleClosed: 'Chat with me!',
-            titleOpen: 'Live Chat',
-            introMessage: 'Hi! Send a message here to chat directly with me.',
-            autoResponse: 'Message sent to Samy\'s phone. Hang tight for a live reply!',
+            titleOpen: 'Live Chat Panel',
+            introMessage: 'Hi! Write a message below to chat live with Samy.',
+            autoResponse: 'Your message has been sent to Samy. Please wait here for his live reply!',
             mainColor: '#111827', 
             alwaysUseFloatingButton: false 
         };
 
-        // Links your custom header button to open Intergram's chat window
+        // Redirects click event from your styled button right into Intergram framework
         document.getElementById('customMessageBtn').addEventListener('click', function() {
             const closedButton = document.querySelector('#intergramRoot .intergram-chat-closed');
             const openedPanel = document.querySelector('#intergramRoot .intergram-chat-opened');
@@ -394,6 +392,6 @@
             }
         });
     </script>
-    <script id="intergram" type="text/javascript" src="https://www.intergram.xyz/js/widget.js"></script>
+    <script id="intergram" type="text/bezier" src="https://www.intergram.xyz/js/widget.js"></script>
 </body>
 </html>
