@@ -367,19 +367,21 @@
 
     <!-- Live Intergram Two-Way Script Integration -->
     <script>
-        // Set your exact unique chat ID from the Intergram bot screenshot
+        // Set your valid Intergram chat ID verified via bot
         window.intergramId = "6003288214"; 
 
+        // Fully updated object matching configurations from documentation verbatim
         window.intergramCustomizations = {
             titleClosed: 'Chat with me!',
             titleOpen: 'Live Chat Panel',
             introMessage: 'Hi! Write a message below to chat live with Samy.',
             autoResponse: 'Your message has been sent to Samy. Please wait here for his live reply!',
+            autoNoResponse: 'Samy is away from his desk. Leave your message here or contact via WhatsApp!',
             mainColor: '#111827', 
             alwaysUseFloatingButton: false 
         };
 
-        // Redirects click event from your styled button right into Intergram framework
+        // Custom bridge syncing click actions safely into the engine
         document.getElementById('customMessageBtn').addEventListener('click', function() {
             const closedButton = document.querySelector('#intergramRoot .intergram-chat-closed');
             const openedPanel = document.querySelector('#intergramRoot .intergram-chat-opened');
@@ -392,6 +394,6 @@
             }
         });
     </script>
-    <script id="intergram" type="text/bezier" src="https://www.intergram.xyz/js/widget.js"></script>
+    <script id="intergram" type="text/javascript" src="https://www.intergram.xyz/js/widget.js"></script>
 </body>
 </html>
