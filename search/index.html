@@ -393,6 +393,7 @@
     </div>
 
     <div class="section-container">
+        <div class="section-title">Bookmarks</div>
         <div class="shortcuts-grid" id="jsonShortcutsGrid"></div>
     </div>
 
@@ -513,19 +514,9 @@
 
     function parseLogoUrl(imgString, isLocalGrid) {
         if (!imgString) return "";
-        
-        if (/^https?:\/\//i.test(imgString)) {
-            return imgString;
-        }
-        
-        if (!isLocalGrid && !imgString.startsWith('/')) {
-            return '/image/' + imgString;
-        }
-        
-        if (isLocalGrid && !imgString.startsWith('/')) {
-            return '/' + imgString;
-        }
-
+        if (/^https?:\/\//i.test(imgString)) return imgString;
+        if (!isLocalGrid && !imgString.startsWith('/')) return '/image/' + imgString;
+        if (isLocalGrid && !imgString.startsWith('/')) return '/' + imgString;
         return imgString;
     }
 
