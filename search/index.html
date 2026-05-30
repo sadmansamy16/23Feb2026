@@ -2,85 +2,847 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Samy Search</title>
+    <link href="https://samy.pro.bd/favicon.ico" rel="icon" type="image/x-icon" />
+    <link rel="manifest" href="/search/manifest.json">
+    <meta name="theme-color" content="#f5f5f7">
+    
     <style>
-        body { font-family: sans-serif; background: #f5f5f7; padding: 20px; margin: 0; }
-        .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; }
-        
-        .shortcut { 
-            display: flex; flex-direction: column; align-items: center; 
-            text-decoration: none; color: #1d1d1f; cursor: pointer;
+        :root {
+            --bg-color: #f5f5f7;
+            --surface-color: #ffffff;
+            --text-main: #1d1d1f;
+            --text-muted: #86868b;
+            --accent-color: #0071e3;
+            --border-color: #e8e8ed;
+            --shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+            --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            --danger-color: #ff3b30;
         }
 
-        .icon { 
-            width: 55px; height: 55px; border-radius: 15px; overflow: hidden;
-            display: flex; align-items: center; justify-content: center;
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+            background-color: var(--bg-color); 
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex; 
+            flex-direction: column;
+            justify-content: flex-start;
+            align-items: center; 
+            padding: 40px 16px 24px 16px;
         }
 
-        .icon img { width: 100%; height: 100%; object-fit: cover; display: block; }
-        
-        .name { font-size: 11px; margin-top: 8px; text-align: center; }
-        
-        .modal { 
-            position: fixed; top:0; left:0; right:0; bottom:0; background: rgba(0,0,0,0.5); 
-            display: none; justify-content: center; align-items: center; z-index: 999;
+        .workspace {
+            width: 100%;
+            max-width: 680px;
+            display: flex;
+            flex-direction: column;
+            gap: 28px;
+            align-items: center;
         }
+
+        .search-wrapper { 
+            width: 100%; 
+            position: relative;
+        }
+
+        .search-bar-container {
+            display: flex;
+            align-items: center;
+            background: var(--surface-color);
+            border: 1px solid var(--border-color);
+            border-radius: 24px;
+            padding: 4px 8px 4px 8px;
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+            position: relative;
+            z-index: 100;
+        }
+
+        .search-bar-container:focus-within {
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 4px rgba(0, 113, 227, 0.12);
+        }
+
+        .search-icon-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            margin-left: 12px;
+            margin-right: 14px;
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            outline: none;
+            padding: 8px;
+            border-radius: 50%;
+            transition: var(--transition);
+        }
+        
+        .search-icon-btn:hover {
+            background: var(--bg-color);
+            color: var(--accent-color);
+        }
+
+        .search-icon-btn svg { width: 20px; height: 20px; fill: currentColor; }
+
+        input { 
+            flex: 1;
+            border: none;
+            background: transparent;
+            font-size: 17px; 
+            color: var(--text-main);
+            outline: none;
+            padding: 14px 0;
+            width: 100%;
+        }
+
+        .go-btn { 
+            background: var(--accent-color); 
+            color: white; 
+            border: none; 
+            border-radius: 18px; 
+            width: 44px;
+            height: 44px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer; 
+            transition: var(--transition);
+        }
+
+        .go-btn svg { width: 18px; height: 18px; fill: currentColor; }
+
+        .history-popup {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: var(--surface-color);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            margin-top: 8px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.08);
+            z-index: 99;
+            overflow: hidden;
+            display: none;
+            padding: 8px 0;
+        }
+
+        .history-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 20px;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+
+        .history-item:hover {
+            background: var(--bg-color);
+        }
+
+        .history-content {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: var(--text-main);
+            font-size: 15px;
+            flex: 1;
+        }
+
+        .history-clock-icon {
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+        }
+
+        .history-clock-icon svg { width: 16px; height: 16px; fill: currentColor; }
+
+        .history-delete-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            font-size: 18px;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 4px;
+        }
+
+        .history-delete-btn:hover {
+            color: var(--danger-color);
+        }
+
+        .section-container {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding-left: 8px;
+        }
+
+        .section-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-muted);
+            letter-spacing: -0.1px;
+        }
+
+        .edit-toggle-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            padding: 4px;
+            border-radius: 6px;
+            transition: var(--transition);
+        }
+
+        .edit-toggle-btn:hover {
+            color: var(--accent-color);
+            background: rgba(0, 113, 227, 0.05);
+        }
+
+        .edit-toggle-btn.active {
+            color: var(--accent-color);
+        }
+
+        .edit-toggle-btn svg {
+            width: 14px;
+            height: 14px;
+            fill: currentColor;
+        }
+
+        .shortcuts-grid {
+            width: 100%;
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 12px;
+        }
+
+        @media (max-width: 600px) {
+            .shortcuts-grid { 
+                grid-template-columns: repeat(4, 1fr); 
+                gap: 8px; 
+            }
+        }
+
+        .shortcut-item, 
+        .shortcut-item:visited, 
+        .shortcut-item:active, 
+        .shortcut-item:focus {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-decoration: none;
+            color: var(--text-main) !important;
+            outline: none;
+            transition: var(--transition);
+            border-radius: 16px;
+            padding: 8px 4px;
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .shortcut-item:hover {
+            background: var(--surface-color);
+            box-shadow: var(--shadow);
+            transform: translateY(-2px);
+        }
+
+        .icon-container {
+            width: 52px;
+            height: 52px;
+            background: var(--surface-color);
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 8px;
+            overflow: hidden;
+            box-shadow: var(--shadow);
+        }
+
+        .icon-container img {
+            width: 26px;
+            height: 26px;
+            object-fit: contain;
+            border-radius: 4px;
+        }
+
+        .icon-fallback {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--accent-color);
+            background: rgba(0, 113, 227, 0.05);
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-transform: uppercase;
+        }
+
+        .icon-plus {
+            font-size: 24px;
+            font-weight: 400;
+            color: var(--text-muted);
+            background: var(--border-color);
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: var(--transition);
+        }
+
+        .shortcut-item:hover .icon-plus {
+            background: rgba(0, 113, 227, 0.08);
+            color: var(--accent-color);
+        }
+
+        .shortcut-title {
+            font-size: 11px;
+            font-weight: 500;
+            color: var(--text-main);
+            text-align: center;
+            width: 100%;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .delete-btn {
+            position: absolute;
+            top: 2px;
+            right: 2px;
+            width: 18px;
+            height: 18px;
+            background: var(--danger-color);
+            color: white;
+            border-radius: 50%;
+            border: none;
+            font-size: 10px;
+            font-weight: bold;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            z-index: 10;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        .edit-mode .delete-btn {
+            display: flex;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            z-index: 1000;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .modal-card {
+            background: var(--surface-color);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 24px;
+            width: 100%;
+            max-width: 360px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            animation: modalFadeIn 0.2s ease-out;
+        }
+
+        @keyframes modalFadeIn {
+            from { transform: scale(0.95); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .modal-card h3 {
+            font-size: 18px;
+            color: var(--text-main);
+            margin-bottom: 4px;
+        }
+
+        .modal-card input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            font-size: 15px;
+            outline: none;
+            background: var(--bg-color);
+        }
+
+        .modal-card input:focus {
+            border-color: var(--accent-color);
+            background: var(--surface-color);
+        }
+
+        .file-upload-label {
+            display: block;
+            text-align: center;
+            padding: 10px;
+            background: var(--bg-color);
+            border: 1px dashed var(--border-color);
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 14px;
+            color: var(--text-muted);
+            font-weight: 500;
+            transition: var(--transition);
+        }
+
+        .file-upload-label:hover {
+            border-color: var(--accent-color);
+            color: var(--accent-color);
+        }
+
+        #fileInput { display: none; }
+
+        .or-divider {
+            text-align: center;
+            font-size: 12px;
+            color: var(--text-muted);
+            position: relative;
+            margin: 2px 0;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 6px;
+        }
+
+        .modal-buttons button {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .btn-add { background: var(--accent-color); color: white; }
+        .btn-cancel { background: var(--border-color); color: var(--text-main); }
+        .modal-buttons button:hover { opacity: 0.9; }
     </style>
 </head>
 <body>
 
-<div class="grid" id="grid"></div>
+<div class="workspace">
+    <div class="search-wrapper">
+        <div class="search-bar-container">
+            <button class="search-icon-btn" onclick="navigateToCustomPath()" title="Search relative directory path">
+                <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+            </button>
+            <input type="text" id="urlInput" placeholder="Search Google or type URL" inputmode="search" autocomplete="off" spellcheck="false" autofocus>
+            <button class="go-btn" onclick="navigateToSite()" title="Navigate">
+                <svg viewBox="0 0 24 24"><path d="M5 13h11.86l-5.43 5.43 1.42 1.42L21.14 12l-8.29-8.29-1.42 1.42L16.86 11H5v2z"/></svg>
+            </button>
+        </div>
+        <div class="history-popup" id="historyPopup"></div>
+    </div>
 
-<div class="modal" id="modal">
-    <div style="background:white; padding:20px; border-radius:15px; width:250px;">
-        <input type="text" id="name" placeholder="Name" style="width:100%; margin-bottom:10px;"><br>
-        <input type="text" id="url" placeholder="URL" style="width:100%; margin-bottom:10px;"><br>
-        <input type="file" id="file" accept="image/*" style="margin-bottom:10px;"><br>
-        <button onclick="save()" style="width:100%; padding:10px;">Add Shortcut</button>
+    <div class="section-container" style="margin-top: 4px;">
+        <div class="shortcuts-grid" id="jsonShortcutsGrid"></div>
+    </div>
+
+    <div class="section-container">
+        <div class="section-header">
+            <div class="section-title">Local</div>
+            <button class="edit-toggle-btn" id="editToggleBtn" onclick="toggleEditMode()" title="Toggle edit mode">
+                <svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
+            </button>
+        </div>
+        <div class="shortcuts-grid" id="localShortcutsGrid"></div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="addLinkModal">
+    <div class="modal-card">
+        <h3>Add Local Shortcut</h3>
+        <input type="text" id="newTitle" placeholder="Site Name">
+        <input type="text" id="newUrl" placeholder="URL (e.g., domain.com)">
+        
+        <!-- Local File Selector Interface -->
+        <label for="fileInput" class="file-upload-label" id="fileLabel">📁 Choose Local Image File</label>
+        <input type="file" id="fileInput" accept="image/*" onchange="handleFileSelect(event)">
+        
+        <div class="or-divider">── OR ──</div>
+        
+        <input type="text" id="newImg" placeholder="Logo filename or absolute link">
+        
+        <div class="modal-buttons">
+            <button class="btn-cancel" onclick="toggleModal(false)">Cancel</button>
+            <button class="btn-add" onclick="addShortcut()">Add</button>
+        </div>
     </div>
 </div>
 
 <script>
-    function render() {
-        const grid = document.getElementById('grid');
-        grid.innerHTML = '';
-        const list = JSON.parse(localStorage.getItem('myLinks') || '[]');
-        
-        list.forEach((item, idx) => {
-            let a = document.createElement('a');
-            a.className = 'shortcut';
-            a.href = item.url;
-            a.innerHTML = `
-                <div class="icon"><img src="${item.img}"></div>
-                <div class="name">${item.name}</div>
-            `;
-            grid.appendChild(a);
-        });
+    let jsonShortcuts = [];
+    let localShortcuts = [];
+    let searchHistory = [];
+    let isEditMode = false;
+    let db = null;
+    let temporaryBase64 = "";
 
-        grid.innerHTML += `<div class="shortcut" onclick="document.getElementById('modal').style.display='flex'">
-            <div class="icon" style="background:#ddd; font-size:20px;">+</div>
-            <div class="name">Add</div>
-        </div>`;
+    const urlInput = document.getElementById('urlInput');
+    const historyPopup = document.getElementById('historyPopup');
+    const localGrid = document.getElementById('localShortcutsGrid');
+    const editToggleBtn = document.getElementById('editToggleBtn');
+
+    // Initialize IndexedDB database storage layer for hosting raw images offline inside browser context
+    function initDB() {
+        return new Promise((resolve) => {
+            const request = indexedDB.open("SamySearchDB", 1);
+            request.onupgradeneeded = (e) => {
+                let database = e.target.result;
+                if (!database.objectStoreNames.contains("images")) {
+                    database.createObjectStore("images", { keyPath: "id" });
+                }
+            };
+            request.onsuccess = (e) => {
+                db = e.target.result;
+                resolve();
+            };
+            request.onerror = () => {
+                console.error("IndexedDB startup error");
+                resolve();
+            };
+        });
     }
 
-    function save() {
-        const name = document.getElementById('name').value;
-        const url = document.getElementById('url').value;
-        const file = document.getElementById('file').files[0];
-        const reader = new FileReader();
+    function storeImageInDB(id, base64Data) {
+        if (!db) return;
+        const tx = db.transaction("images", "readwrite");
+        tx.objectStore("images").put({ id: id, data: base64Data });
+    }
 
-        reader.onload = e => {
-            const list = JSON.parse(localStorage.getItem('myLinks') || '[]');
-            list.push({ name, url, img: e.target.result });
-            localStorage.setItem('myLinks', JSON.stringify(list));
-            document.getElementById('modal').style.display = 'none';
-            render();
+    function removeImageFromDB(id) {
+        if (!db) return;
+        const tx = db.transaction("images", "readwrite");
+        tx.objectStore("images").delete(id);
+    }
+
+    function getImageFromDB(id, callback) {
+        if (!db) { callback(""); return; }
+        const tx = db.transaction("images", "readonly");
+        const req = tx.objectStore("images").get(id);
+        req.onsuccess = () => callback(req.result ? req.result.data : "");
+        req.onerror = () => callback("");
+    }
+
+    function loadSearchHistory() {
+        const storedHistory = localStorage.getItem('samy_search_history');
+        if (storedHistory) searchHistory = JSON.parse(storedHistory);
+    }
+
+    function saveSearchHistory(query) {
+        if (!query) return;
+        searchHistory = searchHistory.filter(item => item !== query);
+        searchHistory.unshift(query);
+        if (searchHistory.length > 6) searchHistory.pop();
+        localStorage.setItem('samy_search_history', JSON.stringify(searchHistory));
+    }
+
+    function showHistoryPopup() {
+        if (searchHistory.length === 0) {
+            historyPopup.style.display = 'none';
+            return;
+        }
+        const currentVal = urlInput.value.trim().toLowerCase();
+        const filtered = searchHistory.filter(item => item.toLowerCase().includes(currentVal));
+
+        if (filtered.length === 0) {
+            historyPopup.style.display = 'none';
+            return;
+        }
+
+        historyPopup.innerHTML = '';
+        filtered.forEach(item => {
+            const div = document.createElement('div');
+            div.className = 'history-item';
+            div.onmousedown = () => {
+                urlInput.value = item;
+                navigateToSite();
+            };
+            div.innerHTML = `
+                <div class="history-content">
+                    <div class="history-clock-icon">
+                        <svg viewBox="0 0 24 24"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/></svg>
+                    </div>
+                    <span>${item}</span>
+                </div>
+                <button class="history-delete-btn" onmousedown="deleteHistoryItem(event, '${item}')">×</button>
+            `;
+            historyPopup.appendChild(div);
+        });
+        historyPopup.style.display = 'block';
+    }
+
+    function deleteHistoryItem(event, item) {
+        event.preventDefault();
+        event.stopPropagation();
+        searchHistory = searchHistory.filter(i => i !== item);
+        localStorage.setItem('samy_search_history', JSON.stringify(searchHistory));
+        showHistoryPopup();
+        urlInput.focus();
+    }
+
+    urlInput.addEventListener('focus', showHistoryPopup);
+    urlInput.addEventListener('input', showHistoryPopup);
+    urlInput.addEventListener('blur', () => {
+        setTimeout(() => historyPopup.style.display = 'none', 200);
+    });
+
+    async function loadShortcuts() {
+        await initDB();
+        const localData = localStorage.getItem('samy_local_shortcuts');
+        if (localData) {
+            localShortcuts = JSON.parse(localData);
+        }
+
+        try {
+            const [listResponse, imgResponse] = await Promise.all([
+                fetch('/search/weblist.json'),
+                fetch('/search/weblogo.json')
+            ]);
+            const webList = await listResponse.json();
+            const webImgs = await imgResponse.json();
+            
+            jsonShortcuts = webList.map(item => {
+                const name = item[0];
+                return { name: name, url: item[1], img: webImgs[name] || "" };
+            });
+        } catch (error) {
+            console.error('Error fetching baseline configuration records:', error);
+        }
+
+        renderAllGrids();
+    }
+
+    function parseLogoUrl(imgString, isLocalGrid) {
+        if (!imgString) return "";
+        if (/^https?:\/\//i.test(imgString) || imgString.startsWith('data:')) return imgString;
+        
+        if (!isLocalGrid) {
+            if (!imgString.startsWith('/')) return '/image/' + imgString;
+            return imgString;
+        }
+        
+        if (!imgString.startsWith('/')) return '/' + imgString;
+        return imgString;
+    }
+
+    function createShortcutTile(item, index, isLocalGrid) {
+        const anchor = document.createElement('a');
+        anchor.className = 'shortcut-item';
+        anchor.href = item.url;
+
+        const deleteButtonHtml = isLocalGrid 
+            ? `<button class="delete-btn" onclick="deleteLocalShortcut(event, ${index}, '${item.img}')">×</button>` 
+            : '';
+
+        anchor.innerHTML = `
+            ${deleteButtonHtml}
+            <div class="icon-container" id="${isLocalGrid ? 'local-icon-' + index : 'json-icon-' + index}">
+                ${getFallbackHtml(item.name)}
+            </div>
+            <div class="shortcut-title">${item.name}</div>
+        `;
+
+        // If it's a local database ID entry, query database asynchronously
+        if (isLocalGrid && item.img.startsWith('db_img_')) {
+            getImageFromDB(item.img, (base64String) => {
+                const container = anchor.querySelector('.icon-container');
+                if (base64String && container) {
+                    container.innerHTML = `<img src="${base64String}" alt="${item.name}" onerror="this.outerHTML=getFallbackHtml('${item.name}')">`;
+                }
+            });
+        } else {
+            let logoUrl = parseLogoUrl(item.img, isLocalGrid);
+            if (logoUrl) {
+                const container = anchor.querySelector('.icon-container');
+                container.innerHTML = `<img src="${logoUrl}" alt="${item.name}" onerror="this.outerHTML=getFallbackHtml('${item.name}')">`;
+            }
+        }
+
+        return anchor;
+    }
+
+    function renderAllGrids() {
+        const jsonGrid = document.getElementById('jsonShortcutsGrid');
+        jsonGrid.innerHTML = '';
+        jsonShortcuts.forEach((item, index) => {
+            jsonGrid.appendChild(createShortcutTile(item, index, false));
+        });
+
+        localGrid.innerHTML = '';
+        localShortcuts.forEach((item, index) => {
+            localGrid.appendChild(createShortcutTile(item, index, true));
+        });
+
+        const addTile = document.createElement('div');
+        addTile.className = 'shortcut-item';
+        addTile.onclick = () => toggleModal(true);
+        addTile.innerHTML = `
+            <div class="icon-container">
+                <div class="icon-plus">+</div>
+            </div>
+            <div class="shortcut-title">Add Link</div>
+        `;
+        localGrid.appendChild(addTile);
+    }
+
+    function handleFileSelect(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            temporaryBase64 = e.target.result;
+            document.getElementById('fileLabel').innerText = "✅ " + file.name;
+            document.getElementById('newImg').value = ""; // Clear text field if user uploads a local file
         };
         reader.readAsDataURL(file);
     }
 
-    render();
+    function toggleEditMode() {
+        isEditMode = !isEditMode;
+        if (isEditMode) {
+            localGrid.classList.add('edit-mode');
+            editToggleBtn.classList.add('active');
+        } else {
+            localGrid.classList.remove('edit-mode');
+            editToggleBtn.classList.remove('active');
+        }
+    }
+
+    function getFallbackHtml(title) {
+        return `<div class="icon-fallback">${title.trim().charAt(0)}</div>`;
+    }
+
+    function toggleModal(show) {
+        const modal = document.getElementById('addLinkModal');
+        modal.style.display = show ? 'flex' : 'none';
+        if (!show) {
+            document.getElementById('newTitle').value = '';
+            document.getElementById('newUrl').value = '';
+            document.getElementById('newImg').value = '';
+            document.getElementById('fileInput').value = '';
+            document.getElementById('fileLabel').innerText = "📁 Choose Local Image File";
+            temporaryBase64 = "";
+        }
+    }
+
+    function addShortcut() {
+        const name = document.getElementById('newTitle').value.trim();
+        let url = document.getElementById('newUrl').value.trim();
+        let img = document.getElementById('newImg').value.trim();
+
+        if (!name || !url) return;
+        if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
+
+        // If local file was loaded, assign persistent custom ID index signature key row target references
+        if (temporaryBase64) {
+            const uniqueImageId = "db_img_" + Date.now();
+            storeImageInDB(uniqueImageId, temporaryBase64);
+            img = uniqueImageId;
+        }
+
+        localShortcuts.push({ name, url, img });
+        localStorage.setItem('samy_local_shortcuts', JSON.stringify(localShortcuts));
+        renderAllGrids();
+        toggleModal(false);
+        if (isEditMode) localGrid.classList.add('edit-mode');
+    }
+
+    function deleteLocalShortcut(event, index, imgId) {
+        event.preventDefault();
+        event.stopPropagation();
+        
+        // Clean out IndexedDB file entry if it was stored internally inside client local storage layers
+        if (imgId && imgId.startsWith('db_img_')) {
+            removeImageFromDB(imgId);
+        }
+
+        localShortcuts.splice(index, 1);
+        localStorage.setItem('samy_local_shortcuts', JSON.stringify(localShortcuts));
+        renderAllGrids();
+        if (isEditMode) localGrid.classList.add('edit-mode');
+    }
+
+    function navigateToSite() {
+        const input = urlInput.value.trim();
+        if (!input) return;
+
+        saveSearchHistory(input);
+        const urlPattern = /^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([\/\w .-]*)*\/?$/i;
+
+        if (urlPattern.test(input)) {
+            let url = input;
+            if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
+            window.location.href = url;
+        } else {
+            window.location.href = "https://www.google.com/search?q=" + encodeURIComponent(input);
+        }
+    }
+
+    function navigateToCustomPath() {
+        const input = urlInput.value.trim();
+        if (!input) return;
+
+        saveSearchHistory(input);
+        const sanitizedInput = input.toLowerCase().replace(/[^a-z0-9-_\/]/g, '');
+        if (sanitizedInput) {
+            window.location.href = "https://samy.pro.bd/" + sanitizedInput;
+        }
+    }
+
+    urlInput.addEventListener("keypress", (e) => {
+        if (e.key === "Enter") navigateToSite();
+    });
+
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('/search/sw.js')
+                .then(reg => console.log('PWA Service Worker Registered Successfully:', reg.scope))
+                .catch(err => console.error('SW Registration Failed:', err));
+        });
+    }
+
+    loadSearchHistory();
+    document.addEventListener("DOMContentLoaded", loadShortcuts);
 </script>
 </body>
 </html>
