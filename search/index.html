@@ -238,17 +238,23 @@
             }
         }
 
-        .shortcut-item {
+        /* Prevent style mutation or layout shifting after link clicks */
+        .shortcut-item, 
+        .shortcut-item:visited, 
+        .shortcut-item:active, 
+        .shortcut-item:focus {
             position: relative;
             display: flex;
             flex-direction: column;
             align-items: center;
             text-decoration: none;
-            color: var(--text-main);
+            color: var(--text-main) !important;
+            outline: none;
             transition: var(--transition);
             border-radius: 16px;
             padding: 8px 4px;
             cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
         }
 
         .shortcut-item:hover {
@@ -438,12 +444,10 @@
         <div class="history-popup" id="historyPopup"></div>
     </div>
 
-    <!-- Nameless Bookmarks Section Grid Layout -->
     <div class="section-container" style="margin-top: 4px;">
         <div class="shortcuts-grid" id="jsonShortcutsGrid"></div>
     </div>
 
-    <!-- Local Shortcuts Section Grid Layout -->
     <div class="section-container">
         <div class="section-header">
             <div class="section-title">Local</div>
@@ -460,7 +464,7 @@
         <h3>Add Local Shortcut</h3>
         <input type="text" id="newTitle" placeholder="Site Name">
         <input type="text" id="newUrl" placeholder="URL (e.g., domain.com)">
-        <input type="text" id="newImg" placeholder="Logo path (e.g. image.jpg or full URL)">
+        <input type="text" id="newImg" placeholder="Logo filename (e.g. logo.png)">
         <div class="modal-buttons">
             <button class="btn-cancel" onclick="toggleModal(false)">Cancel</button>
             <button class="btn-add" onclick="addShortcut()">Add</button>
@@ -569,9 +573,17 @@
 
     function parseLogoUrl(imgString, isLocalGrid) {
         if (!imgString) return "";
+        // If it's already an absolute web URL, return it directly
         if (/^https?:\/\//i.test(imgString)) return imgString;
-        if (!isLocalGrid && !imgString.startsWith('/')) return '/image/' + imgString;
-        if (isLocalGrid && !imgString.startsWith('/')) return '/' + imgString;
+        
+        // Baseline bookmarks logic fallback path
+        if (!isLocalGrid) {
+            if (!imgString.startsWith('/')) return '/image/' + imgString;
+            return imgString;
+        }
+        
+        // Local grid path logic: points strictly to domain root (/) instead of nested folder path options
+        if (!imgString.startsWith('/')) return '/' + imgString;
         return imgString;
     }
 
