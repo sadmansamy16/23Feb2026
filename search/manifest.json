@@ -1,0 +1,16 @@
+{
+  "short_name": "Samy Search",
+  "name": "Samy Search Engine Hub",
+  "icons": [
+    {
+      "src": "https://samy.pro.bd/favicon.ico",
+      "sizes": "64x64 32x32 24x24 16x16",
+      "type": "image/x-icon"
+    }
+  ],
+  "start_url": "/search/",
+  "background_color": "#f5f5f7",
+  "theme_color": "#f5f5f7",
+  "display": "standalone",
+  "orientation": "portrait"
+}
