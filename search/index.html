@@ -238,7 +238,6 @@
             }
         }
 
-        /* Prevent style mutation or layout shifting after link clicks */
         .shortcut-item, 
         .shortcut-item:visited, 
         .shortcut-item:active, 
@@ -406,6 +405,35 @@
             background: var(--surface-color);
         }
 
+        .file-upload-label {
+            display: block;
+            text-align: center;
+            padding: 10px;
+            background: var(--bg-color);
+            border: 1px dashed var(--border-color);
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 14px;
+            color: var(--text-muted);
+            font-weight: 500;
+            transition: var(--transition);
+        }
+
+        .file-upload-label:hover {
+            border-color: var(--accent-color);
+            color: var(--accent-color);
+        }
+
+        #fileInput { display: none; }
+
+        .or-divider {
+            text-align: center;
+            font-size: 12px;
+            color: var(--text-muted);
+            position: relative;
+            margin: 2px 0;
+        }
+
         .modal-buttons {
             display: flex;
             gap: 10px;
@@ -464,7 +492,15 @@
         <h3>Add Local Shortcut</h3>
         <input type="text" id="newTitle" placeholder="Site Name">
         <input type="text" id="newUrl" placeholder="URL (e.g., domain.com)">
-        <input type="text" id="newImg" placeholder="Logo filename (e.g. logo.png)">
+        
+        <!-- Local File Selector Interface -->
+        <label for="fileInput" class="file-upload-label" id="fileLabel">📁 Choose Local Image File</label>
+        <input type="file" id="fileInput" accept="image/*" onchange="handleFileSelect(event)">
+        
+        <div class="or-divider">── OR ──</div>
+        
+        <input type="text" id="newImg" placeholder="Logo filename or absolute link">
+        
         <div class="modal-buttons">
             <button class="btn-cancel" onclick="toggleModal(false)">Cancel</button>
             <button class="btn-add" onclick="addShortcut()">Add</button>
@@ -477,11 +513,54 @@
     let localShortcuts = [];
     let searchHistory = [];
     let isEditMode = false;
+    let db = null;
+    let temporaryBase64 = "";
 
     const urlInput = document.getElementById('urlInput');
     const historyPopup = document.getElementById('historyPopup');
     const localGrid = document.getElementById('localShortcutsGrid');
     const editToggleBtn = document.getElementById('editToggleBtn');
+
+    // Initialize IndexedDB database storage layer for hosting raw images offline inside browser context
+    function initDB() {
+        return new Promise((resolve) => {
+            const request = indexedDB.open("SamySearchDB", 1);
+            request.onupgradeneeded = (e) => {
+                let database = e.target.result;
+                if (!database.objectStoreNames.contains("images")) {
+                    database.createObjectStore("images", { keyPath: "id" });
+                }
+            };
+            request.onsuccess = (e) => {
+                db = e.target.result;
+                resolve();
+            };
+            request.onerror = () => {
+                console.error("IndexedDB startup error");
+                resolve();
+            };
+        });
+    }
+
+    function storeImageInDB(id, base64Data) {
+        if (!db) return;
+        const tx = db.transaction("images", "readwrite");
+        tx.objectStore("images").put({ id: id, data: base64Data });
+    }
+
+    function removeImageFromDB(id) {
+        if (!db) return;
+        const tx = db.transaction("images", "readwrite");
+        tx.objectStore("images").delete(id);
+    }
+
+    function getImageFromDB(id, callback) {
+        if (!db) { callback(""); return; }
+        const tx = db.transaction("images", "readonly");
+        const req = tx.objectStore("images").get(id);
+        req.onsuccess = () => callback(req.result ? req.result.data : "");
+        req.onerror = () => callback("");
+    }
 
     function loadSearchHistory() {
         const storedHistory = localStorage.getItem('samy_search_history');
@@ -547,6 +626,7 @@
     });
 
     async function loadShortcuts() {
+        await initDB();
         const localData = localStorage.getItem('samy_local_shortcuts');
         if (localData) {
             localShortcuts = JSON.parse(localData);
@@ -565,7 +645,7 @@
                 return { name: name, url: item[1], img: webImgs[name] || "" };
             });
         } catch (error) {
-            console.error('Error fetching baseline JSON config records:', error);
+            console.error('Error fetching baseline configuration records:', error);
         }
 
         renderAllGrids();
@@ -573,40 +653,50 @@
 
     function parseLogoUrl(imgString, isLocalGrid) {
         if (!imgString) return "";
-        // If it's already an absolute web URL, return it directly
-        if (/^https?:\/\//i.test(imgString)) return imgString;
+        if (/^https?:\/\//i.test(imgString) || imgString.startsWith('data:')) return imgString;
         
-        // Baseline bookmarks logic fallback path
         if (!isLocalGrid) {
             if (!imgString.startsWith('/')) return '/image/' + imgString;
             return imgString;
         }
         
-        // Local grid path logic: points strictly to domain root (/) instead of nested folder path options
         if (!imgString.startsWith('/')) return '/' + imgString;
         return imgString;
     }
 
     function createShortcutTile(item, index, isLocalGrid) {
-        let logoUrl = parseLogoUrl(item.img, isLocalGrid);
-
         const anchor = document.createElement('a');
         anchor.className = 'shortcut-item';
         anchor.href = item.url;
 
-        let iconContent = logoUrl 
-            ? `<img src="${logoUrl}" alt="${item.name}" onerror="this.outerHTML=getFallbackHtml('${item.name}')">` 
-            : getFallbackHtml(item.name);
-
         const deleteButtonHtml = isLocalGrid 
-            ? `<button class="delete-btn" onclick="deleteLocalShortcut(event, ${index})">×</button>` 
+            ? `<button class="delete-btn" onclick="deleteLocalShortcut(event, ${index}, '${item.img}')">×</button>` 
             : '';
 
         anchor.innerHTML = `
             ${deleteButtonHtml}
-            <div class="icon-container">${iconContent}</div>
+            <div class="icon-container" id="${isLocalGrid ? 'local-icon-' + index : 'json-icon-' + index}">
+                ${getFallbackHtml(item.name)}
+            </div>
             <div class="shortcut-title">${item.name}</div>
         `;
+
+        // If it's a local database ID entry, query database asynchronously
+        if (isLocalGrid && item.img.startsWith('db_img_')) {
+            getImageFromDB(item.img, (base64String) => {
+                const container = anchor.querySelector('.icon-container');
+                if (base64String && container) {
+                    container.innerHTML = `<img src="${base64String}" alt="${item.name}" onerror="this.outerHTML=getFallbackHtml('${item.name}')">`;
+                }
+            });
+        } else {
+            let logoUrl = parseLogoUrl(item.img, isLocalGrid);
+            if (logoUrl) {
+                const container = anchor.querySelector('.icon-container');
+                container.innerHTML = `<img src="${logoUrl}" alt="${item.name}" onerror="this.outerHTML=getFallbackHtml('${item.name}')">`;
+            }
+        }
+
         return anchor;
     }
 
@@ -634,6 +724,19 @@
         localGrid.appendChild(addTile);
     }
 
+    function handleFileSelect(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            temporaryBase64 = e.target.result;
+            document.getElementById('fileLabel').innerText = "✅ " + file.name;
+            document.getElementById('newImg').value = ""; // Clear text field if user uploads a local file
+        };
+        reader.readAsDataURL(file);
+    }
+
     function toggleEditMode() {
         isEditMode = !isEditMode;
         if (isEditMode) {
@@ -656,16 +759,26 @@
             document.getElementById('newTitle').value = '';
             document.getElementById('newUrl').value = '';
             document.getElementById('newImg').value = '';
+            document.getElementById('fileInput').value = '';
+            document.getElementById('fileLabel').innerText = "📁 Choose Local Image File";
+            temporaryBase64 = "";
         }
     }
 
     function addShortcut() {
         const name = document.getElementById('newTitle').value.trim();
         let url = document.getElementById('newUrl').value.trim();
-        const img = document.getElementById('newImg').value.trim();
+        let img = document.getElementById('newImg').value.trim();
 
         if (!name || !url) return;
         if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
+
+        // If local file was loaded, assign persistent custom ID index signature key row target references
+        if (temporaryBase64) {
+            const uniqueImageId = "db_img_" + Date.now();
+            storeImageInDB(uniqueImageId, temporaryBase64);
+            img = uniqueImageId;
+        }
 
         localShortcuts.push({ name, url, img });
         localStorage.setItem('samy_local_shortcuts', JSON.stringify(localShortcuts));
@@ -674,16 +787,21 @@
         if (isEditMode) localGrid.classList.add('edit-mode');
     }
 
-    function deleteLocalShortcut(event, index) {
+    function deleteLocalShortcut(event, index, imgId) {
         event.preventDefault();
         event.stopPropagation();
+        
+        // Clean out IndexedDB file entry if it was stored internally inside client local storage layers
+        if (imgId && imgId.startsWith('db_img_')) {
+            removeImageFromDB(imgId);
+        }
+
         localShortcuts.splice(index, 1);
         localStorage.setItem('samy_local_shortcuts', JSON.stringify(localShortcuts));
         renderAllGrids();
         if (isEditMode) localGrid.classList.add('edit-mode');
     }
 
-    // Right arrow navigation logic
     function navigateToSite() {
         const input = urlInput.value.trim();
         if (!input) return;
@@ -700,16 +818,12 @@
         }
     }
 
-    // Left magnifying glass path generation logic
     function navigateToCustomPath() {
         const input = urlInput.value.trim();
         if (!input) return;
 
         saveSearchHistory(input);
-        
-        // Lowercases and retains directory forward slashes securely
         const sanitizedInput = input.toLowerCase().replace(/[^a-z0-9-_\/]/g, '');
-        
         if (sanitizedInput) {
             window.location.href = "https://samy.pro.bd/" + sanitizedInput;
         }
