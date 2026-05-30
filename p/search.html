@@ -40,7 +40,7 @@
             max-width: 680px;
             display: flex;
             flex-direction: column;
-            gap: 32px;
+            gap: 28px;
             align-items: center;
         }
 
@@ -164,7 +164,22 @@
             color: var(--danger-color);
         }
 
-        /* Shortcuts Layout Configuration */
+        /* Section Layouts */
+        .section-container {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .section-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-muted);
+            padding-left: 8px;
+            letter-spacing: -0.1px;
+        }
+
         .shortcuts-grid {
             width: 100%;
             display: grid;
@@ -232,7 +247,6 @@
             text-transform: uppercase;
         }
 
-        /* Plus Icon Custom Layout Fallback Graphic */
         .icon-plus {
             font-size: 24px;
             font-weight: 400;
@@ -286,7 +300,7 @@
             display: flex;
         }
 
-        /* Modal Overlay Configuration */
+        /* Modal Structure Configuration */
         .modal-overlay {
             position: fixed;
             top: 0;
@@ -368,6 +382,7 @@
 <body>
 
 <div class="workspace">
+    <!-- Omnibar Wrap Section -->
     <div class="search-wrapper">
         <div class="search-bar-container">
             <div class="search-icon">
@@ -379,15 +394,26 @@
             </button>
         </div>
 
+        <!-- Dropdown Match list wrapper -->
         <div class="history-popup" id="historyPopup"></div>
     </div>
 
-    <div class="shortcuts-grid" id="shortcutsLibrary"></div>
+    <!-- Main JSON Configured Grid Section -->
+    <div class="section-container">
+        <div class="shortcuts-grid" id="jsonShortcutsGrid"></div>
+    </div>
+
+    <!-- Isolated Local Custom Grid Section -->
+    <div class="section-container">
+        <div class="section-title">Local</div>
+        <div class="shortcuts-grid" id="localShortcutsGrid"></div>
+    </div>
 </div>
 
+<!-- Modal Dialog Structure -->
 <div class="modal-overlay" id="addLinkModal">
     <div class="modal-card">
-        <h3>Add Shortcut</h3>
+        <h3>Add Local Shortcut</h3>
         <input type="text" id="newTitle" placeholder="Site Name">
         <input type="text" id="newUrl" placeholder="URL (e.g., domain.com)">
         <input type="text" id="newImg" placeholder="Logo filename or leave empty">
@@ -399,25 +425,24 @@
 </div>
 
 <script>
-    let currentShortcuts = [];
+    let jsonShortcuts = [];
+    let localShortcuts = [];
     let searchHistory = [];
 
     const urlInput = document.getElementById('urlInput');
     const historyPopup = document.getElementById('historyPopup');
 
-    // History Pipeline Operations
+    // Google-like History Mechanics
     function loadSearchHistory() {
         const storedHistory = localStorage.getItem('samy_search_history');
-        if (storedHistory) {
-            searchHistory = JSON.parse(storedHistory);
-        }
+        if (storedHistory) searchHistory = JSON.parse(storedHistory);
     }
 
     function saveSearchHistory(query) {
         if (!query) return;
         searchHistory = searchHistory.filter(item => item !== query);
         searchHistory.unshift(query);
-        if (searchHistory.length > 6) searchHistory.pop(); // Keep top 6 items
+        if (searchHistory.length > 6) searchHistory.pop();
         localStorage.setItem('samy_search_history', JSON.stringify(searchHistory));
     }
 
@@ -426,7 +451,6 @@
             historyPopup.style.display = 'none';
             return;
         }
-
         const currentVal = urlInput.value.trim().toLowerCase();
         const filtered = searchHistory.filter(item => item.toLowerCase().includes(currentVal));
 
@@ -443,7 +467,6 @@
                 urlInput.value = item;
                 navigateToSite();
             };
-
             div.innerHTML = `
                 <div class="history-content">
                     <div class="history-clock-icon">
@@ -455,7 +478,6 @@
             `;
             historyPopup.appendChild(div);
         });
-
         historyPopup.style.display = 'block';
     }
 
@@ -468,7 +490,6 @@
         urlInput.focus();
     }
 
-    // Input Handlers
     urlInput.addEventListener('focus', showHistoryPopup);
     urlInput.addEventListener('input', showHistoryPopup);
     urlInput.addEventListener('blur', () => {
@@ -477,69 +498,75 @@
 
     // Shortcuts Engine Operations
     async function loadShortcuts() {
-        const localData = localStorage.getItem('samy_shortcuts');
-        
+        // Always load custom shortcuts from LocalStorage
+        const localData = localStorage.getItem('samy_local_shortcuts');
         if (localData) {
-            currentShortcuts = JSON.parse(localData);
-            renderShortcuts();
-        } else {
-            try {
-                const [listResponse, imgResponse] = await Promise.all([
-                    fetch('/p/search_web_list.json'),
-                    fetch('/p/search_web_img.json')
-                ]);
-
-                const webList = await listResponse.json();
-                const webImgs = await imgResponse.json();
-                
-                currentShortcuts = webList.map(item => {
-                    const name = item[0];
-                    return {
-                        name: name,
-                        url: item[1],
-                        img: webImgs[name] || ""
-                    };
-                });
-
-                saveToLocalStorage();
-                renderShortcuts();
-            } catch (error) {
-                console.error('Error fetching baseline configuration records:', error);
-            }
+            localShortcuts = JSON.parse(localData);
         }
+
+        // Always read raw base JSON assets directly (Cannot be deleted or overwritten)
+        try {
+            const [listResponse, imgResponse] = await Promise.all([
+                fetch('/p/search_web_list.json'),
+                fetch('/p/search_web_img.json')
+            ]);
+            const webList = await listResponse.json();
+            const webImgs = await imgResponse.json();
+            
+            jsonShortcuts = webList.map(item => {
+                const name = item[0];
+                return { name: name, url: item[1], img: webImgs[name] || "" };
+            });
+        } catch (error) {
+            console.error('Error fetching baseline JSON config records:', error);
+        }
+
+        renderAllGrids();
     }
 
-    function renderShortcuts() {
-        const grid = document.getElementById('shortcutsLibrary');
-        grid.innerHTML = '';
+    function createShortcutTile(item, index, isLocalGrid) {
+        let logoUrl = item.img;
+        if (logoUrl && !logoUrl.startsWith('http://') && !logoUrl.startsWith('https://')) {
+            logoUrl = '/image/' + logoUrl;
+        }
 
-        currentShortcuts.forEach((item, index) => {
-            let logoUrl = item.img;
+        const anchor = document.createElement('a');
+        anchor.className = 'shortcut-item';
+        anchor.href = item.url;
 
-            if (logoUrl && !logoUrl.startsWith('http://') && !logoUrl.startsWith('https://')) {
-                logoUrl = '/image/' + logoUrl;
-            }
+        let iconContent = logoUrl 
+            ? `<img src="${logoUrl}" alt="${item.name}" onerror="this.outerHTML=getFallbackHtml('${item.name}')">` 
+            : getFallbackHtml(item.name);
 
-            const anchor = document.createElement('a');
-            anchor.className = 'shortcut-item';
-            anchor.href = item.url;
+        // Only add delete buttons to the Local section tiles
+        const deleteButtonHtml = isLocalGrid 
+            ? `<button class="delete-btn" onclick="deleteLocalShortcut(event, ${index})">×</button>` 
+            : '';
 
-            let iconContent = '';
-            if (logoUrl) {
-                iconContent = `<img src="${logoUrl}" alt="${item.name}" onerror="this.outerHTML=getFallbackHtml('${item.name}')">`;
-            } else {
-                iconContent = getFallbackHtml(item.name);
-            }
+        anchor.innerHTML = `
+            ${deleteButtonHtml}
+            <div class="icon-container">${iconContent}</div>
+            <div class="shortcut-title">${item.name}</div>
+        `;
+        return anchor;
+    }
 
-            anchor.innerHTML = `
-                <button class="delete-btn" onclick="deleteShortcut(event, ${index})">×</button>
-                <div class="icon-container">${iconContent}</div>
-                <div class="shortcut-title">${item.name}</div>
-            `;
-            grid.appendChild(anchor);
+    function renderAllGrids() {
+        // 1. Render Main JSON Grid (Permanent)
+        const jsonGrid = document.getElementById('jsonShortcutsGrid');
+        jsonGrid.innerHTML = '';
+        jsonShortcuts.forEach((item, index) => {
+            jsonGrid.appendChild(createShortcutTile(item, index, false));
         });
 
-        // Appends the modern interactive "+" tile at the end of the list matching the grid theme
+        // 2. Render Local Custom Grid (Editable)
+        const localGrid = document.getElementById('localShortcutsGrid');
+        localGrid.innerHTML = '';
+        localShortcuts.forEach((item, index) => {
+            localGrid.appendChild(createShortcutTile(item, index, true));
+        });
+
+        // 3. Append Dynamic '+' Tile at the end of Local Section Grid
         const addTile = document.createElement('div');
         addTile.className = 'shortcut-item';
         addTile.onclick = () => toggleModal(true);
@@ -549,7 +576,7 @@
             </div>
             <div class="shortcut-title">Add Link</div>
         `;
-        grid.appendChild(addTile);
+        localGrid.appendChild(addTile);
     }
 
     function getFallbackHtml(title) {
@@ -572,27 +599,20 @@
         const img = document.getElementById('newImg').value.trim();
 
         if (!name || !url) return;
+        if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
 
-        if (!/^https?:\/\//i.test(url)) {
-            url = 'https://' + url;
-        }
-
-        currentShortcuts.push({ name, url, img });
-        saveToLocalStorage();
-        renderShortcuts();
+        localShortcuts.push({ name, url, img });
+        localStorage.setItem('samy_local_shortcuts', JSON.stringify(localShortcuts));
+        renderAllGrids();
         toggleModal(false);
     }
 
-    function deleteShortcut(event, index) {
+    function deleteLocalShortcut(event, index) {
         event.preventDefault();
         event.stopPropagation();
-        currentShortcuts.splice(index, 1);
-        saveToLocalStorage();
-        renderShortcuts();
-    }
-
-    function saveToLocalStorage() {
-        localStorage.setItem('samy_shortcuts', JSON.stringify(currentShortcuts));
+        localShortcuts.splice(index, 1);
+        localStorage.setItem('samy_local_shortcuts', JSON.stringify(localShortcuts));
+        renderAllGrids();
     }
 
     function navigateToSite() {
@@ -600,7 +620,6 @@
         if (!input) return;
 
         saveSearchHistory(input);
-
         const urlPattern = /^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([\/\w .-]*)*\/?$/i;
 
         if (urlPattern.test(input)) {
@@ -622,7 +641,6 @@
             .catch(err => console.log('SW Registration Error:', err));
     }
 
-    // Initialize layout hooks
     loadSearchHistory();
     document.addEventListener("DOMContentLoaded", loadShortcuts);
 </script>
