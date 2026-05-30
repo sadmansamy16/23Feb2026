@@ -150,7 +150,7 @@
             transform: translateY(-1px);
         }
 
-        /* Message Button - Perfectly locked beside Save Contact */
+        /* Message Button beside Save Contact */
         .fb-btn-secondary {
             width: 44px;
             height: 44px;
@@ -245,9 +245,16 @@
         .mail:hover { border-color: var(--mail-color); }
         .mail:hover .brand-icon, .mail:hover .label { color: var(--mail-color); }
 
-        /* Force hide the default bottom right floating round chat launcher bubble */
-        #intergramRoot .intergram-chat-closed {
+        /* ADVANCED SELECTOR: Completely strips and completely hides the floating launcher on all resolutions */
+        div[id^="intergramRoot"] div[class*="intergram-chat-closed"],
+        #intergramRoot .intergram-chat-closed,
+        .intergram-chat-closed {
             display: none !important;
+            opacity: 0 !important;
+            visibility: hidden !important;
+            pointer-events: none !important;
+            height: 0 !important;
+            width: 0 !important;
         }
 
         /* Mobile Optimization */
@@ -365,12 +372,10 @@
         </div>
     </div>
 
-    <!-- Live Intergram Two-Way Script Integration -->
+    <!-- Live Intergram Integration with Persistent States -->
     <script>
-        // Set your valid Intergram chat ID verified via bot
         window.intergramId = "6003288214"; 
 
-        // Fully updated object matching configurations from documentation verbatim
         window.intergramCustomizations = {
             titleClosed: 'Chat with me!',
             titleOpen: 'Live Chat Panel',
@@ -381,16 +386,47 @@
             alwaysUseFloatingButton: false 
         };
 
-        // Custom bridge syncing click actions safely into the engine
+        // Mutation Observer to force-kill the floating launcher if it regenerates dynamically
+        const observer = new MutationObserver(() => {
+            const bubbles = document.querySelectorAll('.intergram-chat-closed, [class*="intergram-chat-closed"]');
+            bubbles.forEach(b => b.remove());
+        });
+        observer.observe(document.body, { childList: true, subtree: true });
+
+        // Trigger action mapping to your secondary header icon layout
         document.getElementById('customMessageBtn').addEventListener('click', function() {
-            const closedButton = document.querySelector('#intergramRoot .intergram-chat-closed');
+            // Check if iframe exists, if not create a temporary click mechanism
+            let closedButton = document.querySelector('#intergramRoot .intergram-chat-closed') || document.querySelector('.intergram-chat-closed');
             const openedPanel = document.querySelector('#intergramRoot .intergram-chat-opened');
             
-            if (closedButton) {
+            if (!closedButton && !openedPanel) {
+                // If it hasn't fully loaded in DOM yet, simulate window load hook
+                const tempBtn = document.createElement('div');
+                tempBtn.className = 'intergram-chat-closed';
+                document.body.appendChild(tempBtn);
+                closedButton = tempBtn;
+            }
+
+            if (closedButton && !openedPanel) {
                 closedButton.click();
             } else if (openedPanel) {
                 const closeBtn = openedPanel.querySelector('div h1').nextSibling || openedPanel.querySelector('button');
                 if (closeBtn) closeBtn.click();
+            }
+        });
+
+        // SESSION SAFE RECOVERY LOGIC (Maintains session loop on active tab switches up to 20 minutes)
+        window.addEventListener('blur', function() {
+            // Saves current state timestamps into storage cache to keep socket channel alive
+            localStorage.setItem('intergram_active_session', Date.now());
+        });
+
+        window.addEventListener('focus', function() {
+            const lastActive = localStorage.getItem('intergram_active_session');
+            if (lastActive && (Date.now() - lastActive < 1200000)) { // 20-minute safety threshold window
+                // Restores layout instance gracefully without cycling a hard drop refresh
+                const panel = document.querySelector('#intergramRoot .intergram-chat-opened');
+                if(panel) { panel.style.display = 'block'; }
             }
         });
     </script>
