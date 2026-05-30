@@ -5,39 +5,28 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Samy Search</title>
     <style>
-        :root {
-            --bg-color: #f5f5f7;
-            --surface-color: #ffffff;
-            --text-main: #1d1d1f;
-            --text-muted: #86868b;
-            --accent-color: #0071e3;
-            --border-color: #e8e8ed;
-        }
-
+        :root { --bg-color: #f5f5f7; }
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        
-        body { 
-            font-family: -apple-system, sans-serif;
-            background-color: var(--bg-color); 
-            padding: 40px 16px;
-        }
+        body { font-family: -apple-system, sans-serif; background-color: var(--bg-color); padding: 40px 16px; }
 
-        /* REMOVED CLICK EFFECTS: No transitions or transforms */
+        .shortcuts-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+
+        /* REMOVED ALL ANIMATIONS AND CLICK EFFECTS */
         .shortcut-item {
             display: flex;
             flex-direction: column;
             align-items: center;
             text-decoration: none;
-            color: var(--text-main);
+            color: #1d1d1f;
             cursor: pointer;
             -webkit-tap-highlight-color: transparent;
+            transition: none !important;
         }
 
-        /* NEW LOGO CROPPING: Forces square fill */
+        /* FULL LOGO FILL: No background, image crops to fit */
         .icon-container {
             width: 52px;
             height: 52px;
-            background: #eee;
             border-radius: 14px;
             overflow: hidden;
             display: flex;
@@ -49,34 +38,16 @@
         .icon-container img {
             width: 100%;
             height: 100%;
-            object-fit: cover; /* This crops the image to fill the box */
+            object-fit: cover; /* This makes it fill the box entirely */
+            display: block;
         }
 
-        .icon-fallback {
-            width: 100%;
-            height: 100%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            background: #e0e0e0;
-            font-weight: 600;
-        }
+        .shortcut-title { font-size: 11px; width: 100%; text-align: center; }
 
-        .shortcut-title {
-            font-size: 11px;
-            width: 100%;
-            text-align: center;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        /* --- UI Elements --- */
-        .shortcuts-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
-        .modal-overlay { position: fixed; top:0; left:0; right:0; bottom:0; background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center; }
-        .modal-card { background: white; padding: 20px; border-radius: 20px; width: 300px; }
-        input { width: 100%; padding: 10px; margin: 5px 0; border: 1px solid #ccc; border-radius: 8px; }
-        button { padding: 10px; cursor: pointer; }
+        .modal-overlay { position: fixed; top:0; left:0; right:0; bottom:0; background: rgba(0,0,0,0.4); display: none; justify-content: center; align-items: center; }
+        .modal-card { background: white; padding: 20px; border-radius: 20px; width: 90%; max-width: 300px; }
+        input { width: 100%; padding: 10px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; }
+        button { padding: 10px 20px; cursor: pointer; border: none; border-radius: 8px; background: #0071e3; color: white; }
     </style>
 </head>
 <body>
@@ -85,12 +56,12 @@
 
 <div class="modal-overlay" id="addLinkModal">
     <div class="modal-card">
-        <h3>Add Link</h3>
+        <h3>Add Shortcut</h3>
         <input type="text" id="newTitle" placeholder="Name">
         <input type="text" id="newUrl" placeholder="URL">
         <input type="file" id="fileInput" accept="image/*">
         <button onclick="addShortcut()">Save</button>
-        <button onclick="toggleModal(false)">Cancel</button>
+        <button onclick="toggleModal(false)" style="background:#ddd; color:black;">Cancel</button>
     </div>
 </div>
 
@@ -98,7 +69,6 @@
     let localShortcuts = JSON.parse(localStorage.getItem('localShortcuts') || '[]');
     let db = null;
 
-    // Initialize Database
     const request = indexedDB.open("SamySearchDB", 1);
     request.onupgradeneeded = e => e.target.result.createObjectStore("images", { keyPath: "id" });
     request.onsuccess = e => { db = e.target.result; render(); };
@@ -108,8 +78,9 @@
         grid.innerHTML = '';
         
         localShortcuts.forEach((item, index) => {
-            const div = document.createElement('div');
+            const div = document.createElement('a');
             div.className = 'shortcut-item';
+            div.href = item.url;
             div.innerHTML = `
                 <div class="icon-container" id="icon-${index}"></div>
                 <div class="shortcut-title">${item.name}</div>
@@ -125,22 +96,22 @@
         });
 
         grid.innerHTML += `<div class="shortcut-item" onclick="toggleModal(true)">
-            <div class="icon-container"><div class="icon-fallback">+</div></div>
+            <div class="icon-container" style="background:#eee;"><div style="font-size:24px;">+</div></div>
             <div class="shortcut-title">Add</div>
         </div>`;
     }
 
     function addShortcut() {
         const name = document.getElementById('newTitle').value;
-        const fileInput = document.getElementById('fileInput');
-        const file = fileInput.files[0];
+        const url = document.getElementById('newUrl').value;
+        const file = document.getElementById('fileInput').files[0];
         const id = 'db_' + Date.now();
 
         if (file) {
             const reader = new FileReader();
             reader.onload = e => {
                 db.transaction("images", "readwrite").objectStore("images").put({ id, data: e.target.result });
-                localShortcuts.push({ name, img: id });
+                localShortcuts.push({ name, url, img: id });
                 localStorage.setItem('localShortcuts', JSON.stringify(localShortcuts));
                 render();
             };
