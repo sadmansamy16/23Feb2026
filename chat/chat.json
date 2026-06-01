@@ -1,8 +1,8 @@
 [
 
 ["https://samy.pro.bd/chat/movie", "l"],
-[https://samy.pro.bd/chat/app", "l"],
-[https://samy.pro.bd/chat/anime", "l"],
+["https://samy.pro.bd/chat/app", "l"],
+["https://samy.pro.bd/chat/anime", "l"],
 [" ", "l"],  
 ["WiFi", "l"],
   ["http://192.168.0.1/#accessControl http://192.168.0.1/#dhcpServerAdv https://myswift.amberit.com.bd/SignIn.aspx", "r"],
