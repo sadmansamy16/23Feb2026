@@ -48,10 +48,13 @@
   ["chat42", "r"],
   ["chat43", "l"],
   ["chat44", "r"],
-  ["chat45", "l"],
-  ["chat46", "r"],
-  ["chat47", "l"],
-  ["chat48", "r"],
-  ["chat49", "l"],
-  ["chat50", "r"]
+
+
+["SIP Call User Panel", "m"],
+["https://amarip.net/", "r"],
+["https://webvoice.net/", "r"],
+["https://icctalk.com/", "r"],
+["https://sip.italk.com.bd/iconiptsp/", "r"],
+["https://iptsp.pmcon.net/portal/login", "r"]
+
 ]
