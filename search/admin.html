@@ -1,37 +1,239 @@
-<input type="text" id="title" placeholder="Website Title">
-<input type="text" id="url" placeholder="Website Link">
-<input type="text" id="logo" placeholder="Logo URL">
-<input type="password" id="pass" placeholder="Password">
-<button onclick="submitData()">Save to new_web.json</button>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Search Admin Panel</title>
+    <style>
+        :root {
+            --bg-color: #0d1117;
+            --card-bg: #161b22;
+            --border-color: #30363d;
+            --text-color: #c9d1d9;
+            --text-muted: #8b949e;
+            --primary: #238636;
+            --primary-hover: #2ea043;
+            --error: #f85149;
+        }
 
-<script>
-const STORED_HASH = "34c3af7fecf199a685fddce33a803fc8e3830fe1c2c5584b3aa38f436e2cce45";
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
 
-async function submitData() {
-    const inputPass = document.getElementById('pass').value;
-    const hash = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(inputPass));
-    const hex = Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, '0')).join('');
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 16px;
+        }
 
-    if (hex !== STORED_HASH) return alert("Wrong Password!");
+        .admin-card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            width: 100%;
+            max-width: 440px;
+            padding: 24px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+        }
 
-    const payload = JSON.stringify({
-        title: document.getElementById('title').value,
-        url: document.getElementById('url').value,
-        logo: document.getElementById('logo').value
-    });
+        .header {
+            margin-bottom: 24px;
+            text-align: center;
+        }
 
-    // This triggers the workflow using the GitHub API
-    // IMPORTANT: Replace 'YOUR_TOKEN' with your actual PAT
-    fetch('https://api.github.com/repos/sadmansamy16/23Feb2026/dispatches', {
-        method: 'POST',
-        headers: { 
-            'Authorization': 'token YOUR_TOKEN', 
-            'Content-Type': 'application/json' 
-        },
-        body: JSON.stringify({ 
-            event_type: 'update-data', 
-            client_payload: { data: payload } 
-        })
-    }).then(() => alert("Update triggered!"));
-}
-</script>
+        .header h3 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .header p {
+            color: var(--text-muted);
+            font-size: 0.875rem;
+        }
+
+        .input-group {
+            margin-bottom: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .input-group label {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--text-color);
+        }
+
+        input[type="text"],
+        input[type="password"] {
+            background-color: var(--bg-color);
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            padding: 12px 14px;
+            font-size: 1rem;
+            border-radius: 6px;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            width: 100%;
+            -webkit-appearance: none;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #58a6ff;
+            box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.15);
+        }
+
+        .btn {
+            background-color: var(--primary);
+            color: white;
+            border: 1px solid rgba(240, 246, 252, 0.1);
+            padding: 14px;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: 6px;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 8px;
+            transition: background-color 0.2s;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .btn:hover {
+            background-color: var(--primary-hover);
+        }
+
+        .btn:active {
+            transform: scale(0.98);
+        }
+
+        .status-msg {
+            margin-top: 16px;
+            padding: 10px;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            text-align: center;
+            display: none;
+        }
+
+        .status-msg.error {
+            display: block;
+            background-color: rgba(248, 81, 73, 0.1);
+            border: 1px solid var(--error);
+            color: var(--error);
+        }
+
+        .status-msg.success {
+            display: block;
+            background-color: rgba(46, 160, 67, 0.1);
+            border: 1px solid var(--primary-hover);
+            color: #56d364;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="admin-card">
+        <div class="header">
+            <h3>Search Admin Panel</h3>
+            <p>Update configuration settings instantly</p>
+        </div>
+
+        <div class="input-group">
+            <label for="title">Website Title</label>
+            <input type="text" id="title" placeholder="e.g., My Portal">
+        </div>
+
+        <div class="input-group">
+            <label for="url">Website URL</label>
+            <input type="text" id="url" placeholder="e.g., https://samy.pro.bd">
+        </div>
+
+        <div class="input-group">
+            <label for="logo">Logo URL</label>
+            <input type="text" id="logo" placeholder="e.g., https://example.com/logo.png">
+        </div>
+
+        <div class="input-group">
+            <label for="pass">Admin Password</label>
+            <input type="password" id="pass" placeholder="••••••••">
+        </div>
+
+        <button class="btn" onclick="submitData()">Save and Sync Changes</button>
+
+        <div id="status" class="status-msg"></div>
+    </div>
+
+    <script>
+        // SHA-256 Hash for 'nurshilpi43'
+        const STORED_HASH = "34c3af7fecf199a685fddce33a803fc8e3830fe1c2c5584b3aa38f436e2cce45";
+
+        function showStatus(text, type) {
+            const statusEl = document.getElementById('status');
+            statusEl.innerText = text;
+            statusEl.className = `status-msg ${type}`;
+        }
+
+        async function submitData() {
+            const inputPass = document.getElementById('pass').value;
+            const statusEl = document.getElementById('status');
+            statusEl.className = 'status-msg'; // Clear status
+
+            if (!inputPass) {
+                showStatus("Please enter your password.", "error");
+                return;
+            }
+            
+            // Generate SHA-256 Hash locally
+            const hash = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(inputPass));
+            const hex = Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, '0')).join('');
+
+            if (hex !== STORED_HASH) {
+                showStatus("Authentication Failed: Wrong Password!", "error");
+                return;
+            }
+
+            const payload = JSON.stringify({
+                title: document.getElementById('title').value,
+                url: document.getElementById('url').value,
+                logo: document.getElementById('logo').value
+            });
+
+            // CRITICAL REMINDER: Replace 'YOUR_TOKEN' with your structural Personal Access Token
+            const token = "YOUR_TOKEN"; 
+
+            showStatus("Sending updates to GitHub...", "success");
+
+            fetch('https://api.github.com/repos/sadmansamy16/23Feb2026/dispatches', {
+                method: 'POST',
+                headers: { 
+                    'Authorization': 'token ' + token, 
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/vnd.github.v3+json'
+                },
+                body: JSON.stringify({ 
+                    event_type: 'update-data', 
+                    client_payload: { data: payload } 
+                })
+            })
+            .then(response => {
+                if (response.ok) {
+                    showStatus("Success! GitHub Action triggered dynamically.", "success");
+                } else {
+                    showStatus("API Error! Verify token permissions & validity.", "error");
+                }
+            })
+            .catch(err => showStatus("Network request failed: " + err, "error"));
+        }
+    </script>
+</body>
+</html>
