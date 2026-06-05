@@ -1,21 +1,29 @@
-name: Update JSON
+name: Auto Update JSON from Admin
 on:
-  repository_dispatch:
-    types: [update-data]
+  issues:
+    types: [opened]
 
 jobs:
   update-json:
+    if: contains(github.event.issue.labels.*.name, 'admin-update')
     runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      contents: write
     steps:
       - uses: actions/checkout@v3
 
-      - name: Update file
+      - name: Write Data to File
         run: |
-          echo '${{ github.event.client_payload.data }}' > search/new_web.json
-        env:
-          GITHUB_TOKEN: ${{ secrets.MY_TOKEN }}
+          echo '${{ github.event.issue.body }}' > search/new_web.json
 
-      - uses: stefanzweifel/git-auto-commit-action@v4
+      - name: Commit and Push Changes
+        uses: stefanzweifel/git-auto-commit-action@v4
         with:
-          commit_message: "Admin Update: Website Info"
+          commit_message: "Automatic Admin Update"
           file_pattern: search/new_web.json
+
+      - name: Close Issue
+        run: gh issue close ${{ github.event.issue.number }} --comment "Successfully updated website data!"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
