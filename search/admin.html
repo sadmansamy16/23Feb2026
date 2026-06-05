@@ -1,0 +1,37 @@
+<input type="text" id="title" placeholder="Website Title">
+<input type="text" id="url" placeholder="Website Link">
+<input type="text" id="logo" placeholder="Logo URL">
+<input type="password" id="pass" placeholder="Password">
+<button onclick="submitData()">Save to new_web.json</button>
+
+<script>
+const STORED_HASH = "34c3af7fecf199a685fddce33a803fc8e3830fe1c2c5584b3aa38f436e2cce45";
+
+async function submitData() {
+    const inputPass = document.getElementById('pass').value;
+    const hash = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(inputPass));
+    const hex = Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, '0')).join('');
+
+    if (hex !== STORED_HASH) return alert("Wrong Password!");
+
+    const payload = JSON.stringify({
+        title: document.getElementById('title').value,
+        url: document.getElementById('url').value,
+        logo: document.getElementById('logo').value
+    });
+
+    // This triggers the workflow using the GitHub API
+    // IMPORTANT: Replace 'YOUR_TOKEN' with your actual PAT
+    fetch('https://api.github.com/repos/sadmansamy16/23Feb2026/dispatches', {
+        method: 'POST',
+        headers: { 
+            'Authorization': 'token YOUR_TOKEN', 
+            'Content-Type': 'application/json' 
+        },
+        body: JSON.stringify({ 
+            event_type: 'update-data', 
+            client_payload: { data: payload } 
+        })
+    }).then(() => alert("Update triggered!"));
+}
+</script>
