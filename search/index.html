@@ -42,7 +42,7 @@
             flex-direction: column;
             justify-content: flex-start;
             align-items: center; 
-            padding: 24px 16px 24px 16px;
+            padding: 24px 16px;
             transition: background-color 0.3s ease;
             position: relative;
         }
@@ -52,21 +52,17 @@
             max-width: 680px;
             display: flex;
             flex-direction: column;
-            gap: 28px;
+            gap: 24px;
             align-items: center;
             position: relative;
+            padding-top: 12px;
         }
 
-        /* Top Bar Container pushing settings to the absolute right corner */
-        .top-action-bar {
-            width: 100%;
-            display: flex;
-            justify-content: flex-end;
-            align-items: center;
-            padding: 8px 8px 0 8px;
-        }
-
+        /* Pinned completely to the zero edge of the top-right corner */
         .top-settings-btn {
+            position: absolute;
+            top: 0;
+            right: 0;
             background: transparent;
             border: none;
             color: var(--text-muted);
@@ -75,28 +71,25 @@
             justify-content: center;
             cursor: pointer;
             outline: none;
-            padding: 8px;
-            border-radius: 50%;
+            width: 44px;
+            height: 44px;
             transition: var(--transition);
+            z-index: 200;
         }
         
         .top-settings-btn:hover {
-            background: var(--surface-color);
             color: var(--accent-color);
-            box-shadow: var(--shadow);
         }
 
         .top-settings-btn svg {
-            width: 24px;
-            height: 24px;
+            width: 22px;
+            height: 22px;
             fill: currentColor;
         }
 
-        /* Creates a beautiful space directly after the next line of settings */
         .search-wrapper { 
             width: 100%; 
             position: relative;
-            margin-top: 20px;
         }
 
         .search-bar-container {
@@ -105,7 +98,7 @@
             background: var(--surface-color);
             border: 1px solid var(--border-color);
             border-radius: 24px;
-            padding: 4px 8px 4px 8px;
+            padding: 4px 8px;
             box-shadow: var(--shadow);
             transition: var(--transition);
             position: relative;
@@ -561,11 +554,9 @@
 <body>
 
 <div class="workspace">
-    <div class="top-action-bar">
-        <button class="top-settings-btn" onclick="toggleSettingsModal(true)" title="Settings">
-            <svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
-        </button>
-    </div>
+    <button class="top-settings-btn" onclick="toggleSettingsModal(true)" title="Settings">
+        <svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
+    </button>
 
     <div class="search-wrapper">
         <div class="search-bar-container">
@@ -580,7 +571,7 @@
         <div class="history-popup" id="historyPopup"></div>
     </div>
 
-    <div class="section-container" style="margin-top: 4px;">
+    <div class="section-container" style="margin-top: -4px;">
         <div class="shortcuts-grid" id="jsonShortcutsGrid"></div>
     </div>
 
@@ -879,7 +870,7 @@
                 return { name: name, url: item[1], img: webImgs[name] || "" };
             });
         } catch (error) {
-            console.error('Error fetching configuration records:', error);
+            console.error('Error fetching data records:', error);
         }
         renderAllGrids();
     }
