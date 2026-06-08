@@ -53,13 +53,14 @@
             flex-direction: column;
             gap: 28px;
             align-items: center;
-            position: relative;
-            padding-top: 20px;
+            position: relative; /* Context for absolute positioning */
+            padding-top: 20px;  /* Minimal internal breathing room for the gear */
         }
 
+        /* Fixed Top Right Settings Button Alignment */
         .top-settings-btn {
             position: absolute;
-            top: -12px;
+            top: -12px; /* Pulls it up safely clear of the search container */
             right: 4px;
             background: transparent;
             border: none;
@@ -72,7 +73,7 @@
             padding: 8px;
             border-radius: 50%;
             transition: var(--transition);
-            z-index: 101;
+            z-index: 101; /* Keeps it above the search dropdown flow */
         }
         
         .top-settings-btn:hover {
@@ -549,15 +550,14 @@
             font-weight: bold; cursor: pointer; padding: 0 4px; font-size: 16px;
         }
         .empty-history-text { text-align: center; color: var(--text-muted); padding: 12px; font-size: 13px; }
-        
-        #vaultFrame { display: none; }
     </style>
 </head>
 <body>
 
 <div class="workspace">
+    <!-- Settings Button embedded safely right here inside workspace boundaries -->
     <button class="top-settings-btn" onclick="toggleSettingsModal(true)" title="Settings">
-        <svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.05.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
+        <svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
     </button>
 
     <div class="search-wrapper">
@@ -663,28 +663,21 @@
     </div>
 </div>
 
-<!-- Bridges link dynamically targeting your separate storage environment sandbox -->
-<iframe id="vaultFrame" src="https://sadmansamy16.github.io/i"></iframe>
-
 <script>
     let jsonShortcuts = [];
     let localShortcuts = [];
     let searchHistory = [];
     let isEditMode = false;
+    let db = null;
     let temporaryBase64 = "";
     let currentTheme = "light";
     let currentEngine = "google";
-    
-    const imageRequestCallbacks = {};
 
-    // Explicitly targeting your GitHub pages repository link endpoint
-    const VAULT_ORIGIN = "https://sadmansamy16.github.io";
     const urlInput = document.getElementById('urlInput');
     const historyPopup = document.getElementById('historyPopup');
     const localGrid = document.getElementById('localShortcutsGrid');
     const editToggleBtn = document.getElementById('editToggleBtn');
     const dynamicEngineBtn = document.getElementById('dynamicEngineBtn');
-    const vaultFrame = document.getElementById('vaultFrame');
 
     const engines = {
         google: "https://www.google.com/search?q=",
@@ -700,29 +693,39 @@
         bing: "/p/img/bing.webp"
     };
 
-    function vaultPost(messageObj) {
-        if (vaultFrame && vaultFrame.contentWindow) {
-            vaultFrame.contentWindow.postMessage(messageObj, VAULT_ORIGIN);
-        }
+    function initDB() {
+        return new Promise((resolve) => {
+            const request = indexedDB.open("SamySearchDB", 1);
+            request.onupgradeneeded = (e) => {
+                let database = e.target.result;
+                if (!database.objectStoreNames.contains("images")) {
+                    database.createObjectStore("images", { keyPath: "id" });
+                }
+            };
+            request.onsuccess = (e) => { db = e.target.result; resolve(); };
+            request.onerror = () => { console.error("IndexedDB startup error"); resolve(); };
+        });
     }
 
-    window.addEventListener("message", (event) => {
-        if (event.origin !== VAULT_ORIGIN) return;
+    function storeImageInDB(id, base64Data) {
+        if (!db) return;
+        const tx = db.transaction("images", "readwrite");
+        tx.objectStore("images").put({ id: id, data: base64Data });
+    }
 
-        const { type, value, id, data } = event.data;
+    function removeImageFromDB(id) {
+        if (!db) return;
+        const tx = db.transaction("images", "readwrite");
+        tx.objectStore("images").delete(id);
+    }
 
-        if (type === "LOADED_SHORTCUTS") {
-            localShortcuts = value || [];
-            renderAllGrids();
-        } 
-        
-        else if (type === "IMAGE_RESULT") {
-            if (imageRequestCallbacks[id]) {
-                imageRequestCallbacks[id](data);
-                delete imageRequestCallbacks[id];
-            }
-        }
-    });
+    function getImageFromDB(id, callback) {
+        if (!db) { callback(""); return; }
+        const tx = db.transaction("images", "readonly");
+        const req = tx.objectStore("images").get(id);
+        req.onsuccess = () => callback(req.result ? req.result.data : "");
+        req.onerror = () => callback("");
+    }
 
     function loadPreferences() {
         const storedHistory = localStorage.getItem('samy_search_history');
@@ -854,6 +857,10 @@
     }
 
     async function loadShortcuts() {
+        await initDB();
+        const localData = localStorage.getItem('samy_local_shortcuts');
+        if (localData) localShortcuts = JSON.parse(localData);
+
         try {
             const [listResponse, imgResponse] = await Promise.all([
                 fetch('/search/weblist.json'),
@@ -867,16 +874,9 @@
                 return { name: name, url: item[1], img: webImgs[name] || "" };
             });
         } catch (error) {
-            console.error('Error fetching static web files:', error);
+            console.error('Error fetching configuration records:', error);
         }
-
-        if (vaultFrame.contentWindow) {
-            vaultPost({ action: "loadData" });
-        } else {
-            vaultFrame.addEventListener("load", () => {
-                vaultPost({ action: "loadData" });
-            });
-        }
+        renderAllGrids();
     }
 
     function parseLogoUrl(imgString, isLocalGrid) {
@@ -894,13 +894,12 @@
         anchor.innerHTML = `${deleteButtonHtml}<div class="icon-container">${getFallbackHtml(item.name)}</div><div class="shortcut-title">${item.name}</div>`;
 
         if (isLocalGrid && item.img.startsWith('db_img_')) {
-            imageRequestCallbacks[item.img] = (base64String) => {
+            getImageFromDB(item.img, (base64String) => {
                 const container = anchor.querySelector('.icon-container');
                 if (base64String && container) {
                     container.innerHTML = `<img src="${base64String}" alt="${item.name}" onerror="this.outerHTML=getFallbackHtml('${item.name}')">`;
                 }
-            };
-            vaultPost({ action: "fetchImage", id: item.img });
+            });
         } else {
             let logoUrl = parseLogoUrl(item.img, isLocalGrid);
             if (logoUrl) {
@@ -966,13 +965,12 @@
 
         if (temporaryBase64) {
             const uniqueImageId = "db_img_" + Date.now();
-            vaultPost({ action: "saveImage", id: uniqueImageId, value: temporaryBase64 });
+            storeImageInDB(uniqueImageId, temporaryBase64);
             img = uniqueImageId;
         }
 
         localShortcuts.push({ name, url, img });
-        vaultPost({ action: "saveShortcuts", value: localShortcuts });
-        
+        localStorage.setItem('samy_local_shortcuts', JSON.stringify(localShortcuts));
         renderAllGrids();
         toggleModal(false);
         if (isEditMode) localGrid.classList.add('edit-mode');
@@ -980,12 +978,9 @@
 
     function deleteLocalShortcut(event, index, imgId) {
         event.preventDefault(); event.stopPropagation();
-        if (imgId && imgId.startsWith('db_img_')) {
-            vaultPost({ action: "deleteImage", id: imgId });
-        }
+        if (imgId && imgId.startsWith('db_img_')) removeImageFromDB(imgId);
         localShortcuts.splice(index, 1);
-        vaultPost({ action: "saveShortcuts", value: localShortcuts });
-
+        localStorage.setItem('samy_local_shortcuts', JSON.stringify(localShortcuts));
         renderAllGrids();
         if (isEditMode) localGrid.classList.add('edit-mode');
     }
