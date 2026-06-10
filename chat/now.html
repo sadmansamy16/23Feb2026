@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>SamyChat</title>
+    <link rel="manifest" href="manifest.json">
+    <style>
+        :root {
+            --bg-color: #e7ebf0;
+            --bubble-right: #effdde;
+            --bubble-left: #ffffff;
+            --link-color: #00488d;
+            --tg-blue: #2481cc;
+            --time-color: #687a86;
+        }
+
+        body { 
+            background-color: var(--bg-color); 
+            margin: 0; 
+            font-family: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
+            display: flex; 
+            justify-content: center; 
+            height: 100vh;
+            overflow: hidden;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .main-wrapper {
+            width: 100%;
+            max-width: 600px;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        .chat-container { 
+            flex: 1;
+            padding: 15px 15px 85px 15px; 
+            box-sizing: border-box; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 12px; 
+            overflow-y: auto; 
+            background-image: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png'); 
+            background-blend-mode: overlay;
+            scroll-behavior: smooth; 
+        }
+
+        .bubble { 
+            max-width: 85%; 
+            padding: 8px 14px 18px 14px; 
+            border-radius: 18px; 
+            font-size: 16px; 
+            line-height: 1.4; 
+            color: #000; 
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1); 
+            word-wrap: break-word;
+            overflow-wrap: break-word; 
+            position: relative;
+            font-weight: 500;
+            white-space: pre-wrap; 
+            cursor: pointer;
+            user-select: none; 
+            -webkit-user-select: none;
+        }
+
+        .right { 
+            align-self: flex-end; 
+            background-color: var(--bubble-right); 
+            border-bottom-right-radius: 4px; 
+        }
+
+        .left { 
+            align-self: flex-start; 
+            background-color: var(--bubble-left); 
+            border-bottom-left-radius: 4px; 
+        }
+
+        .middle {
+            align-self: center;
+            background-color: rgba(0, 0, 0, 0.25);
+            color: #ffffff;
+            border-radius: 12px;
+            padding: 4px 14px;
+            font-size: 13px;
+            margin: 8px 0;
+            box-shadow: none;
+            text-align: center;
+            font-weight: 500;
+        }
+
+        .time-stamp {
+            position: absolute;
+            bottom: 3px;
+            right: 12px;
+            font-size: 11px;
+            color: var(--time-color);
+            font-weight: normal;
+        }
+
+        .right .time-stamp {
+            color: #5ea675; 
+        }
+
+        .bubble a { 
+            color: var(--link-color); 
+            text-decoration: none; 
+            font-weight: 700; 
+            border-bottom: 1px solid rgba(0, 72, 141, 0.2);
+            white-space: normal;
+        }
+
+        /* Context Menu */
+        .context-menu {
+            position: fixed;
+            background: rgba(255, 255, 255, 0.92);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+            display: none;
+            flex-direction: column;
+            z-index: 10000;
+            min-width: 150px;
+            overflow: hidden;
+            animation: menuFadeIn 0.12s ease-out;
+        }
+
+        .context-menu-item {
+            padding: 12px 16px;
+            font-size: 15px;
+            font-weight: 500;
+            color: #ff3b30; 
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: background 0.1s ease;
+        }
+
+        .context-menu-item:hover, .context-menu-item:active {
+            background: rgba(0, 0, 0, 0.05);
+        }
+
+        @keyframes menuFadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        /* Pinned Input Bar */
+        .input-bar-container {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 10px 15px 15px 15px;
+            background: linear-gradient(transparent, rgba(231, 235, 240, 0.95) 20%, var(--bg-color));
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .input-wrapper {
+            flex: 1;
+            background: #ffffff;
+            border-radius: 22px;
+            padding: 4px 6px 4px 16px;
+            display: flex;
+            align-items: center;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .input-wrapper input {
+            flex: 1;
+            border: none;
+            outline: none;
+            padding: 8px 0;
+            font-size: 16px;
+            background: transparent;
+        }
+
+        .send-btn {
+            background-color: var(--tg-blue);
+            color: white;
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+            transition: transform 0.1s ease;
+            padding: 0;
+        }
+
+        .send-btn:active { transform: scale(0.92); }
+        .send-btn svg { width: 20px; height: 20px; margin-left: 2px; }
+        .chat-container::-webkit-scrollbar { width: 4px; }
+        .chat-container::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.1); border-radius: 10px; }
+    </style>
+</head>
+<body>
+
+    <div class="main-wrapper">
+        <div id="chat" class="chat-container"></div>
+
+        <div class="input-bar-container">
+            <div class="input-wrapper">
+                <input type="text" id="chat-input" placeholder="Message" autocomplete="off" onkeypress="if(event.key === 'Enter') sendLiveChatMessage()">
+            </div>
+            <button class="send-btn" onclick="sendLiveChatMessage()" aria-label="Send Message">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="22" y1="2" x2="11" y2="13"></line>
+                    <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                </svg>
+            </button>
+        </div>
+    </div>
+
+    <!-- Context Menu Framework -->
+    <div id="custom-menu" class="context-menu">
+        <div class="context-menu-item" onclick="triggerMessageDeletion()">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+            Delete
+        </div>
+    </div>
+
+    <script>
+        // CONFIGURATION: Updated credentials
+        const TELEGRAM_BOT_TOKEN = "6241716507:AAFT2sN3al_EAwOtY3IlypgPgTTT2B0hXSE"; 
+        const TELEGRAM_CHAT_ID = "6003288214"; 
+
+        let isFirstLoad = true;
+        let selectedMessageIndex = null; 
+        let touchTimer = null; 
+
+        function linkify(text) {
+            const hiddenLinkPattern = /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g;
+            text = text.replace(hiddenLinkPattern, '<a href="$2" target="_blank">$1</a>');
+
+            const urlPattern = /(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/ig;
+            const wwwPattern = /(^|[^\/])(www\.[\S]+(\b|$))/gim;
+            
+            return text.replace(urlPattern, (match) => text.includes('href="' + match) ? match : `<a href="${match}" target="_blank">${match}</a>`)
+                       .replace(wwwPattern, '$1<a href="http://$2" target="_blank">$2</a>');
+        }
+
+        function formatTime(timestamp) {
+            const date = new Date(timestamp);
+            let hours = date.getHours();
+            let minutes = date.getMinutes();
+            const ampm = hours >= 12 ? 'PM' : 'AM';
+            hours = hours % 12;
+            hours = hours ? hours : 12; 
+            minutes = minutes < 10 ? '0' + minutes : minutes;
+            return `${hours}:${minutes} ${ampm}`;
+        }
+
+        function formatDateLabel(timestamp) {
+            const date = new Date(timestamp);
+            const today = new Date();
+            const yesterday = new Date(today);
+            yesterday.setDate(yesterday.getDate() - 1);
+
+            if (date.toDateString() === today.toDateString()) {
+                return "Today";
+            } else if (date.toDateString() === yesterday.toDateString()) {
+                return "Yesterday";
+            } else {
+                return date.toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' });
+            }
+        }
+
+        function loadMessages() {
+            const chat = document.getElementById('chat');
+            const isAtBottom = chat.scrollHeight - chat.clientHeight <= chat.scrollTop + 80;
+
+            const messages = JSON.parse(localStorage.getItem("samy_chat_cache")) || [];
+            chat.innerHTML = ''; 
+
+            if (messages.length === 0) {
+                const div = document.createElement('div');
+                div.className = 'bubble middle';
+                div.innerText = "No messages here yet. Send a message to get started!";
+                chat.appendChild(div);
+                return;
+            }
+
+            let lastDateLabel = "";
+
+            messages.forEach((msg, index) => {
+                const text = msg[0];
+                const type = msg[1]; 
+                const timestamp = msg[2] || Date.now();
+
+                const currentDateLabel = formatDateLabel(timestamp);
+                if (currentDateLabel !== lastDateLabel) {
+                    const dateDiv = document.createElement('div');
+                    dateDiv.className = 'bubble middle';
+                    dateDiv.innerText = currentDateLabel;
+                    chat.appendChild(dateDiv);
+                    lastDateLabel = currentDateLabel;
+                }
+
+                const div = document.createElement('div');
+                div.className = 'bubble ' + (type === 'user' ? 'right' : 'left');
+                div.innerHTML = linkify(text);
+
+                const timeSpan = document.createElement('span');
+                timeSpan.className = 'time-stamp';
+                timeSpan.innerText = formatTime(timestamp);
+                div.appendChild(timeSpan);
+                
+                div.addEventListener('contextmenu', (e) => {
+                    e.preventDefault();
+                    showDeleteMenu(e.clientX, e.clientY, index);
+                });
+
+                div.addEventListener('touchstart', (e) => {
+                    touchTimer = setTimeout(() => {
+                        showDeleteMenu(e.touches[0].clientX, e.touches[0].clientY, index);
+                    }, 500);
+                }, { passive: true });
+
+                div.addEventListener('touchend', () => clearTimeout(touchTimer));
+                div.addEventListener('touchmove', () => clearTimeout(touchTimer));
+
+                chat.appendChild(div);
+            });
+
+            if (isFirstLoad) {
+                chat.scrollTop = chat.scrollHeight; 
+                isFirstLoad = false;
+            } else if (isAtBottom) {
+                chat.scrollTop = chat.scrollHeight;
+            }
+        }
+
+        function showDeleteMenu(x, y, index) {
+            const menu = document.getElementById('custom-menu');
+            selectedMessageIndex = index;
+            
+            menu.style.left = `${x}px`;
+            menu.style.top = `${y}px`;
+            menu.style.display = 'flex';
+
+            const menuWidth = 160;
+            if (x + menuWidth > window.innerWidth) {
+                menu.style.left = `${window.innerWidth - menuWidth - 10}px`;
+            }
+        }
+
+        document.addEventListener('click', (e) => {
+            const menu = document.getElementById('custom-menu');
+            if (!menu.contains(e.target)) {
+                menu.style.display = 'none';
+            }
+        });
+
+        function triggerMessageDeletion() {
+            if (selectedMessageIndex === null) return;
+            
+            const messages = JSON.parse(localStorage.getItem("samy_chat_cache")) || [];
+            messages.splice(selectedMessageIndex, 1); 
+            localStorage.setItem("samy_chat_cache", JSON.stringify(messages));
+            
+            document.getElementById('custom-menu').style.display = 'none';
+            selectedMessageIndex = null;
+            
+            loadMessages(); 
+        }
+
+        function sendLiveChatMessage() {
+            const inputField = document.getElementById('chat-input');
+            const rawMessage = inputField.value.trim();
+
+            if (!rawMessage) return;
+
+            const messages = JSON.parse(localStorage.getItem("samy_chat_cache")) || [];
+            messages.push([rawMessage, "user", Date.now()]);
+            localStorage.setItem("samy_chat_cache", JSON.stringify(messages));
+
+            loadMessages();
+            inputField.value = '';
+            
+            const chat = document.getElementById('chat');
+            setTimeout(() => { chat.scrollTop = chat.scrollHeight; }, 30);
+
+            const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
+            fetch(url, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    chat_id: TELEGRAM_CHAT_ID,
+                    text: `💬 SamyChat Message:\n\n${rawMessage}`
+                })
+            }).catch(err => console.error("Telegram error: ", err));
+        }
+
+        loadMessages();
+
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js').catch(() => {
+                console.log("Service Worker optional.");
+            });
+        }
+    </script>
+</body>
+</html>
