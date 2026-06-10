@@ -21,7 +21,6 @@
             font-family: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
             display: flex; 
             justify-content: center; 
-            /* Fixes high-scale viewport bugs on mobile browsers */
             position: fixed;
             top: 0;
             left: 0;
@@ -34,7 +33,6 @@
         .main-wrapper {
             width: 100%;
             max-width: 600px;
-            /* Leverages fixed viewport boundaries */
             height: 100%;
             display: flex;
             flex-direction: column;
@@ -43,7 +41,6 @@
 
         .chat-container { 
             flex: 1;
-            /* Extra bottom spacing ensures last bubble clears the floating input deck */
             padding: 15px 15px 90px 15px; 
             box-sizing: border-box; 
             display: flex; 
@@ -56,9 +53,10 @@
             -webkit-overflow-scrolling: touch;
         }
 
+        /* Fixed structural design layout for optimal time positioning without text collisions */
         .bubble { 
             max-width: 85%; 
-            padding: 8px 14px 18px 14px; 
+            padding: 8px 12px; 
             border-radius: 18px; 
             font-size: 16px; 
             line-height: 1.4; 
@@ -68,10 +66,19 @@
             overflow-wrap: break-word; 
             position: relative;
             font-weight: 500;
-            white-space: pre-wrap; 
+            display: flex;
+            flex-direction: row;
+            align-items: flex-end;
+            justify-content: space-between;
+            gap: 15px;
             cursor: pointer;
             user-select: none; 
             -webkit-user-select: none;
+        }
+
+        .bubble-text {
+            white-space: pre-wrap;
+            flex: 1;
         }
 
         .right { 
@@ -97,15 +104,16 @@
             box-shadow: none;
             text-align: center;
             font-weight: 500;
+            display: block;
         }
 
         .time-stamp {
-            position: absolute;
-            bottom: 3px;
-            right: 12px;
             font-size: 11px;
             color: var(--time-color);
             font-weight: normal;
+            white-space: nowrap;
+            user-select: none;
+            margin-bottom: -2px;
         }
 
         .right .time-stamp {
@@ -156,7 +164,6 @@
             to { opacity: 1; transform: scale(1); }
         }
 
-        /* Fixed Input Bar - Locked structurally above keyboard layout boundaries */
         .input-bar-container {
             position: absolute;
             bottom: 0;
@@ -245,6 +252,20 @@
         let selectedMessageIndex = null; 
         let touchTimer = null; 
 
+        // Prompt user for name on first boot setup (Optional)
+        function checkUserIdentity() {
+            if (!localStorage.getItem("samy_chat_username")) {
+                setTimeout(() => {
+                    let name = prompt("Enter your name (Optional):");
+                    if (name && name.trim() !== "") {
+                        localStorage.setItem("samy_chat_username", name.trim());
+                    } else {
+                        localStorage.setItem("samy_chat_username", "Anonymous");
+                    }
+                }, 400);
+            }
+        }
+
         function linkify(text) {
             const hiddenLinkPattern = /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g;
             text = text.replace(hiddenLinkPattern, '<a href="$2" target="_blank">$1</a>');
@@ -291,7 +312,7 @@
 
             if (messages.length === 0) {
                 const div = document.createElement('div');
-                div.className = 'bubble middle';
+                div.className = 'middle';
                 div.innerText = "No messages here yet. Send a message to get started!";
                 chat.appendChild(div);
                 return;
@@ -307,7 +328,7 @@
                 const currentDateLabel = formatDateLabel(timestamp);
                 if (currentDateLabel !== lastDateLabel) {
                     const dateDiv = document.createElement('div');
-                    dateDiv.className = 'bubble middle';
+                    dateDiv.className = 'middle';
                     dateDiv.innerText = currentDateLabel;
                     chat.appendChild(dateDiv);
                     lastDateLabel = currentDateLabel;
@@ -315,7 +336,12 @@
 
                 const div = document.createElement('div');
                 div.className = 'bubble ' + (type === 'user' ? 'right' : 'left');
-                div.innerHTML = linkify(text);
+
+                // Structured text frame inside layout
+                const textSpan = document.createElement('span');
+                textSpan.className = 'bubble-text';
+                textSpan.innerHTML = linkify(text);
+                div.appendChild(textSpan);
 
                 const timeSpan = document.createElement('span');
                 timeSpan.className = 'time-stamp';
@@ -387,8 +413,17 @@
 
             if (!rawMessage) return;
 
+            // Fetch stored sender metadata from active instance
+            const savedName = localStorage.getItem("samy_chat_username");
+            let outboundPayloadText = rawMessage;
+
+            // Append name cleanly onto layout string if valid identity is set
+            if (savedName && savedName !== "Anonymous") {
+                outboundPayloadText = `${savedName}: ${rawMessage}`;
+            }
+
             const messages = JSON.parse(localStorage.getItem("samy_chat_cache")) || [];
-            messages.push([rawMessage, "user", Date.now()]);
+            messages.push([outboundPayloadText, "user", Date.now()]);
             localStorage.setItem("samy_chat_cache", JSON.stringify(messages));
 
             loadMessages();
@@ -397,17 +432,20 @@
             const chat = document.getElementById('chat');
             setTimeout(() => { chat.scrollTop = chat.scrollHeight; }, 30);
 
+            // Clean data transmission to Telegram Endpoint
             const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
             fetch(url, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     chat_id: TELEGRAM_CHAT_ID,
-                    text: `💬 SamyChat Message:\n\n${rawMessage}`
+                    text: outboundPayloadText
                 })
-            }).catch(err => console.error("Telegram error: ", err));
+            }).catch(err => console.error("Telegram endpoint drop:", err));
         }
 
+        // Initialize App Engine
+        checkUserIdentity();
         loadMessages();
 
         if ('serviceWorker' in navigator) {
