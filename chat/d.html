@@ -5,10 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SamyChat</title>
     <link rel="manifest" href="manifest.json">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
     <style>
         :root {
-            --bg-page-desktop: #dae1e7; /* Background behind the floating phone on desktop */
+            --bg-page-desktop: #dae1e7; 
             --bg-color: #e7ebf0;
             --bubble-right: #effdde;
             --bubble-left: #ffffff;
@@ -16,9 +16,9 @@
             --tg-blue: #2481cc;
         }
 
-        /* Standardize desktop layout viewports */
+        /* Standard view layout */
         body { 
-            background-color: var(--bg-page-desktop); 
+            background-color: var(--bg-color); 
             margin: 0; 
             font-family: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
             display: flex; 
@@ -29,23 +29,25 @@
             overflow: hidden;
         }
 
-        /* Main Phone Wrapper Shell for Desktop Devices */
+        /* Default: Full screen height and width for absolute native mobile feel */
         .phone-frame {
             position: relative;
             width: 100%; 
-            max-width: 480px; /* Locked mobile phone layout portrait profile width */
-            height: 100vh;
+            height: 100%;
             background-color: var(--bg-color);
-            box-shadow: none;
             display: flex;
             flex-direction: column;
             overflow: hidden;
         }
 
-        /* Turn on clean drop-shadow framing only on Desktop Monitors */
+        /* ONLY apply the mock floating card layout on large desktop screens */
         @media (min-width: 481px) {
+            body {
+                background-color: var(--bg-page-desktop);
+            }
             .phone-frame {
-                height: 92vh;
+                max-width: 420px; 
+                height: 88vh; /* Perfectly proportioned desktop framework height */
                 border-radius: 24px;
                 box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
                 border: 1px solid rgba(255, 255, 255, 0.4);
@@ -120,55 +122,64 @@
             white-space: normal;
         }
 
-        /* Action Menu Popover context maps perfectly inside view shell */
+        /* Premium Dark Context Menu */
         .bubble-menu {
             position: fixed;
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
+            background: rgba(30, 30, 30, 0.92);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
             border-radius: 14px;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.3);
             display: none;
             flex-direction: column;
             z-index: 2000;
-            min-width: 140px;
+            min-width: 150px;
             overflow: hidden;
-            border: 1px solid rgba(0,0,0,0.08);
-            animation: popMenu 0.15s ease-out;
+            border: 1px solid rgba(255,255,255,0.08);
+            animation: popMenu 0.12s cubic-bezier(0.1, 0.8, 0.3, 1);
         }
 
         @keyframes popMenu {
-            from { transform: scale(0.9); opacity: 0; }
+            from { transform: scale(0.85); opacity: 0; }
             to { transform: scale(1); opacity: 1; }
         }
 
         .bubble-menu button {
             background: none;
             border: none;
-            padding: 12px 16px;
+            padding: 12px 18px;
             text-align: left;
             font-size: 15px;
             font-weight: 500;
             cursor: pointer;
-            color: #000000;
+            color: #ffffff;
             width: 100%;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            gap: 10px;
-            border-bottom: 1px solid rgba(0,0,0,0.05);
+            gap: 12px;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            box-sizing: border-box;
         }
 
         .bubble-menu button:last-child { border-bottom: none; }
-        .bubble-menu button:hover { background: rgba(0, 0, 0, 0.05); }
-        .bubble-menu button.delete-btn { color: #ff3b30; }
+        .bubble-menu button:hover { background: rgba(255, 255, 255, 0.08); }
+        .bubble-menu button.delete-btn { color: #ff453a; }
 
-        .bubble-menu .material-symbols-outlined {
-            font-size: 20px;
-            font-variant-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        .material-symbols-outlined {
+            display: inline-block;
+            font-family: 'Material Symbols Outlined';
+            font-size: 22px;
+            line-height: 1;
+            letter-spacing: normal;
+            text-transform: none;
+            white-space: nowrap;
+            word-wrap: normal;
+            direction: ltr;
+            -webkit-font-feature-settings: 'liga';
+            -webkit-font-smoothing: antialiased;
         }
 
-        /* Thick Separator Line UI */
         .section-separator {
             display: flex;
             align-items: center;
@@ -198,7 +209,6 @@
             text-transform: uppercase;
         }
 
-        /* Message input bottom tray locked to the container base view */
         .input-container {
             position: absolute; 
             bottom: 0; 
@@ -220,7 +230,6 @@
 <body>
 
     <div class="phone-frame">
-        
         <div id="chat" class="chat-container"></div>
         
         <div class="input-container">
@@ -234,7 +243,6 @@
                 </svg>
             </button>
         </div>
-
     </div>
     
     <div id="action-menu" class="bubble-menu">
@@ -308,8 +316,8 @@
             let leftPos = clientX;
             let topPos = clientY + 10;
 
-            if (leftPos + 150 > window.innerWidth) { leftPos = window.innerWidth - 160; }
-            if (topPos + 100 > window.innerHeight) { topPos = clientY - 105; }
+            if (leftPos + 160 > window.innerWidth) { leftPos = window.innerWidth - 170; }
+            if (topPos + 110 > window.innerHeight) { topPos = clientY - 115; }
 
             menu.style.left = leftPos + 'px';
             menu.style.top = topPos + 'px';
