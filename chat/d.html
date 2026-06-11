@@ -16,23 +16,20 @@
             --tg-blue: #2481cc;
         }
 
-        /* Allow pull-to-refresh natively on mobile devices */
         html, body {
             background-color: var(--bg-color);
             margin: 0;
             padding: 0;
             font-family: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            min-height: 100dvh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            height: 100%;
+            width: 100%;
         }
 
-        /* Default Mobile View: Fills dynamic viewport precisely, no cut-offs */
+        /* Default Core Layout: Fills device screen naturally */
         .phone-frame {
             position: relative;
             width: 100%;
-            height: 100dvh;
+            height: 100%;
             background-color: var(--bg-color);
             display: flex;
             flex-direction: column;
@@ -40,21 +37,22 @@
             box-sizing: border-box;
         }
 
-        /* Desktop Layout Frame Configration: Emulates natural smartphone boundaries */
-        @media (min-width: 481px) {
-            html, body {
-                background-color: var(--bg-page-desktop);
-                overflow: hidden; /* Prevent desktop page wrapper from scrolling */
-            }
-            .phone-frame {
-                width: 410px;
-                height: 85vh;
-                max-height: 820px; /* Forces realistic app height bounds on wide screens */
-                min-height: 650px;
-                border-radius: 28px;
-                box-shadow: 0 14px 45px rgba(0, 0, 0, 0.15);
-                border: 1px solid rgba(255, 255, 255, 0.45);
-            }
+        /* These CSS rules will only active if JavaScript detects a real Desktop view environment */
+        body.is-desktop {
+            background-color: var(--bg-page-desktop);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+        body.is-desktop .phone-frame {
+            width: 410px;
+            height: 88vh;
+            max-height: 840px;
+            min-height: 650px;
+            border-radius: 24px;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
+            border: 1px solid rgba(255, 255, 255, 0.45);
         }
 
         .chat-container { 
@@ -125,7 +123,7 @@
             white-space: normal;
         }
 
-        /* Fixed Light/Frosted Glass Action Popover Menu */
+        /* Clean Light Frosted-Glass Context Menu Layout */
         .bubble-menu {
             position: fixed;
             background: rgba(255, 255, 255, 0.94);
@@ -260,6 +258,12 @@
     </div>
 
     <script>
+        // SMART DETECTION: Check environment source cleanly to apply mobile vs desktop rules
+        const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        if (!isMobileDevice) {
+            document.body.classList.add('is-desktop');
+        }
+
         const TELEGRAM_BOT_TOKEN = "6241716507:AAFT2sN3al_EAwOtY3IlypgPgTTT2B0hXSE"; 
         const TELEGRAM_CHAT_ID = "6003288214"; 
         let isFirstLoad = true;
