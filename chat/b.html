@@ -6,50 +6,50 @@
     <title>SamyChat</title>
     <style>
         :root { --bg-color: #e7ebf0; --tg-blue: #2481cc; }
-        body { background-color: var(--bg-color); margin: 0; height: 100vh; display: flex; justify-content: center; overflow: hidden; font-family: -apple-system, sans-serif; }
+        body { background-color: var(--bg-color); margin: 0; height: 100vh; display: flex; justify-content: center; overflow: hidden; }
         
         .main-wrapper { width: 100%; max-width: 600px; height: 100%; display: flex; flex-direction: column; position: relative; }
         
         .chat-container { 
             flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px;
             background-image: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png');
-            background-blend-mode: overlay;
         }
 
-        .bubble { max-width: 85%; padding: 10px 16px; border-radius: 18px; font-size: 16px; position: relative; white-space: pre-wrap; word-wrap: break-word; cursor: pointer; }
+        .bubble { max-width: 85%; padding: 10px 16px; border-radius: 18px; font-size: 16px; position: relative; white-space: pre-wrap; word-wrap: break-word; }
         .right { align-self: flex-end; background-color: #effdde; }
         .left { align-self: flex-start; background-color: #ffffff; }
 
-        .separator { text-align: center; margin: 15px 0; position: relative; color: #888; font-size: 11px; font-weight: bold; }
-        .separator::before, .separator::after { content: ""; position: absolute; top: 50%; width: 30%; height: 1px; background: #cbd2d9; }
-        .separator::before { left: 0; } .separator::after { right: 0; }
+        /* The New Visible Separator */
+        .separator {
+            text-align: center; margin: 15px 0; position: relative; color: #888; font-size: 12px; font-weight: bold;
+        }
+        .separator::before, .separator::after {
+            content: ""; position: absolute; top: 50%; width: 35%; height: 2px; background: #cbd2d9;
+        }
+        .separator::before { left: 0; }
+        .separator::after { right: 0; }
 
-        .input-bar { padding: 10px; background: #e7ebf0; display: flex; gap: 10px; align-items: center; }
+        .input-bar { 
+            padding: 10px; background: #e7ebf0; display: flex; gap: 10px; align-items: center; 
+        }
     </style>
 </head>
 <body>
     <div class="main-wrapper">
         <div id="chat" class="chat-container"></div>
         <div class="input-bar">
-            <input type="text" id="chat-input" style="flex:1; padding: 12px; border-radius: 20px; border:none; outline:none;" placeholder="Message...">
-            <button onclick="sendLiveChatMessage()" style="width: 45px; height: 45px; border-radius: 50%; background: var(--tg-blue); border:none; color:white; display:flex; align-items:center; justify-content:center;">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-            </button>
+            <input type="text" id="chat-input" style="flex:1; padding: 10px; border-radius: 20px; border:none;" placeholder="Message...">
+            <button onclick="sendLiveChatMessage()" style="width: 40px; height: 40px; border-radius: 50%; background: var(--tg-blue); border:none; color:white;">➤</button>
         </div>
-    </div>
-
-    <div id="delete-menu" style="display:none; position:fixed; background:#fff; border-radius:8px; box-shadow:0 2px 10px rgba(0,0,0,0.2); padding:5px; z-index:9999;">
-        <button id="delete-btn" style="border:none; background:none; color:red; padding:10px 20px; cursor:pointer; font-weight:bold;">Delete Message</button>
     </div>
 
     <script>
         const TELEGRAM_BOT_TOKEN = "6241716507:AAFT2sN3al_EAwOtY3IlypgPgTTT2B0hXSE"; 
         const TELEGRAM_CHAT_ID = "6003288214"; 
-        let selectedIndex = null;
 
         async function loadMessages() {
             const chat = document.getElementById('chat');
-            const scrollPos = chat.scrollTop; 
+            const scrollPos = chat.scrollTop; // Save current position
 
             let fileMessages = [];
             try {
@@ -60,45 +60,24 @@
             const localMessages = JSON.parse(localStorage.getItem("samy_chat_cache")) || [];
             
             chat.innerHTML = ''; 
-            fileMessages.forEach(m => appendBubble(chat, m, false));
+            fileMessages.forEach(m => appendBubble(chat, m));
 
             if (fileMessages.length > 0 && localMessages.length > 0) {
                 const sep = document.createElement('div');
-                sep.className = 'separator'; sep.innerText = "LOCAL MESSAGES";
+                sep.className = 'separator'; sep.innerText = "NEW MESSAGES";
                 chat.appendChild(sep);
             }
 
-            localMessages.forEach((m, i) => appendBubble(chat, m, true, i));
-            chat.scrollTop = scrollPos; 
+            localMessages.forEach(m => appendBubble(chat, m));
+            chat.scrollTop = scrollPos; // Restore position to prevent "jumping"
         }
 
-        function appendBubble(container, msg, isLocal, index) {
+        function appendBubble(container, msg) {
             const div = document.createElement('div');
             div.className = 'bubble ' + (msg[1] === 'r' ? 'right' : 'left');
             div.innerText = msg[0];
-
-            if (isLocal) {
-                div.oncontextmenu = (e) => {
-                    e.preventDefault();
-                    selectedIndex = index;
-                    const menu = document.getElementById('delete-menu');
-                    menu.style.display = 'block';
-                    menu.style.left = e.clientX + 'px';
-                    menu.style.top = e.clientY + 'px';
-                };
-            }
             container.appendChild(div);
         }
-
-        document.getElementById('delete-btn').onclick = () => {
-            let messages = JSON.parse(localStorage.getItem("samy_chat_cache")) || [];
-            messages.splice(selectedIndex, 1);
-            localStorage.setItem("samy_chat_cache", JSON.stringify(messages));
-            document.getElementById('delete-menu').style.display = 'none';
-            loadMessages();
-        };
-
-        document.onclick = () => document.getElementById('delete-menu').style.display = 'none';
 
         async function sendLiveChatMessage() {
             const input = document.getElementById('chat-input');
@@ -110,6 +89,7 @@
             
             input.value = '';
             loadMessages();
+            // Force scroll to bottom ONLY when sending new message
             setTimeout(() => { document.getElementById('chat').scrollTop = document.getElementById('chat').scrollHeight; }, 100);
         }
 
