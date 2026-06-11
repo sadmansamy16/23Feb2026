@@ -3,108 +3,167 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SamyChat Hybrid</title>
+    <title>SamyChat</title>
+    <link rel="manifest" href="manifest.json">
     <style>
-        :root { --bg-color: #e7ebf0; --bubble-right: #effdde; --bubble-left: #ffffff; }
-        body { margin: 0; font-family: sans-serif; background: var(--bg-color); }
-        .chat-container { height: 90vh; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 10px; }
-        .bubble { max-width: 80%; padding: 10px; border-radius: 12px; white-space: pre-wrap; position: relative; cursor: pointer; }
-        .right { align-self: flex-end; background: var(--bubble-right); }
-        .left { align-self: flex-start; background: var(--bubble-left); }
-        .separator { text-align: center; font-size: 12px; color: #888; margin: 10px 0; border-top: 1px solid #ccc; padding-top: 5px; }
-        .input-bar { display: flex; padding: 10px; gap: 5px; }
-        input { flex: 1; padding: 10px; border-radius: 20px; border: 1px solid #ccc; }
-        #menu { position: fixed; display: none; background: white; border: 1px solid #ccc; padding: 5px; border-radius: 8px; box-shadow: 2px 2px 5px #ccc; }
-        .menu-item { padding: 5px 10px; cursor: pointer; }
+        :root {
+            --bg-color: #e7ebf0;
+            --bubble-right: #effdde;
+            --bubble-left: #ffffff;
+            --link-color: #00488d;
+        }
+
+        body { 
+            background-color: var(--bg-color); 
+            margin: 0; 
+            font-family: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
+            display: flex; 
+            justify-content: center; 
+        }
+
+       .chat-container { 
+    width: 100%; 
+    max-width: 600px; 
+    height: 100vh; 
+    /* Change padding-bottom from 15px to 80px */
+    padding: 15px 15px 80px 15px; 
+    box-sizing: border-box; 
+    display: flex; 
+    flex-direction: column; 
+    gap: 12px; 
+    overflow-y: auto; 
+    background-image: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png'); 
+    background-blend-mode: overlay;
+    scroll-behavior: smooth; 
+}
+
+        .bubble { 
+            max-width: 85%; 
+            padding: 10px 16px; 
+            border-radius: 18px; 
+            font-size: 16px; 
+            line-height: 1.4; 
+            color: #000; 
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1); 
+            word-wrap: break-word;
+            overflow-wrap: break-word; 
+            position: relative;
+            font-weight: 500;
+            /* ADDED: This preserves \n line breaks and wraps long text */
+            white-space: pre-wrap; 
+        }
+
+        .right { 
+            align-self: flex-end; 
+            background-color: var(--bubble-right); 
+            border-bottom-right-radius: 4px; 
+        }
+
+        .left { 
+            align-self: flex-start; 
+            background-color: var(--bubble-left); 
+            border-bottom-left-radius: 4px; 
+        }
+
+
+.middle {
+    align-self: center;
+    background-color: rgba(0, 0, 0, 0.2);
+    color: #ffffff;
+    border-radius: 10px;
+    padding: 4px 12px;
+    font-size: 12px;
+    margin: 5px 0;
+    box-shadow: none;
+    text-align: center;
+}
+
+        .bubble a { 
+            color: var(--link-color); 
+            text-decoration: none; 
+            font-weight: 700; 
+            border-bottom: 1px solid rgba(0, 72, 141, 0.2);
+            /* Reset white-space for links if needed, though pre-wrap usually works fine here */
+            white-space: normal;
+        }
+
+        /* Custom Scrollbar for a cleaner look */
+        .chat-container::-webkit-scrollbar { width: 4px; }
+        .chat-container::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.1); border-radius: 10px; }
     </style>
 </head>
 <body>
-
-<div id="chat" class="chat-container"></div>
-<div class="input-bar">
-    <input type="text" id="msgInput" placeholder="Type a message...">
-    <button onclick="sendMessage()">Send</button>
+    <div id="chat" class="chat-container"></div>
+<div class="input-bar-container" style="position: fixed; bottom: 0; left: 0; right: 0; padding: 10px; background: #e7ebf0; display: flex; gap: 10px;">
+    <input type="text" id="chat-input" placeholder="Message" style="flex: 1; padding: 10px; border-radius: 20px; border: none;">
+    <button onclick="sendLiveChatMessage()" style="padding: 10px 20px; border-radius: 20px; border: none; background: #2481cc; color: white;">Send</button>
 </div>
 
-<div id="menu">
-    <div class="menu-item" onclick="deleteMsg()">Delete</div>
-    <div class="menu-item" onclick="toggleSide()">Toggle Left/Right</div>
-</div>
 
-<script>
-    let currentMsgs = [];
+    <script>
+    const TELEGRAM_BOT_TOKEN = "6241716507:AAFT2sN3al_EAwOtY3IlypgPgTTT2B0hXSE"; 
+    const TELEGRAM_CHAT_ID = "6003288214"; 
+    let isFirstLoad = true;
 
-    async function loadAll() {
-        // ১. JSON থেকে লোড করা
-        const response = await fetch('./chat.json?t=' + Date.now()).catch(() => []);
-        const jsonMsgs = response.ok ? await response.json() : [];
+    function linkify(text) {
+        const hiddenLinkPattern = /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g;
+        text = text.replace(hiddenLinkPattern, '<a href="$2" target="_blank">$1</a>');
+        const urlPattern = /(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/ig;
+        const wwwPattern = /(^|[^\/])(www\.[\S]+(\b|$))/gim;
+        return text.replace(urlPattern, (match) => text.includes('href="' + match) ? match : `<a href="${match}" target="_blank">${match}</a>`)
+                   .replace(wwwPattern, '$1<a href="http://$2" target="_blank">$2</a>');
+    }
+
+    async function loadMessages() {
+        const chat = document.getElementById('chat');
+        const isAtBottom = chat.scrollHeight - chat.clientHeight <= chat.scrollTop + 60;
+
+        // Fetch file messages
+        let fileMessages = [];
+        try {
+            const response = await fetch('./chat.json?t=' + Date.now());
+            if (response.ok) fileMessages = await response.json();
+        } catch (e) { console.log("Waiting for chat.json..."); }
         
-        // ২. LocalStorage থেকে লোড করা
-        const localMsgs = JSON.parse(localStorage.getItem('myMsgs') || '[]');
-        
-        const container = document.getElementById('chat');
-        container.innerHTML = '';
+        // Fetch local messages
+        const localMessages = JSON.parse(localStorage.getItem("samy_chat_cache")) || [];
+        const allMessages = [...fileMessages, ...localMessages];
 
-        // JSON মেসেজ রেন্ডার
-        jsonMsgs.forEach(m => renderBubble(m[0], m[1], false));
+        chat.innerHTML = ''; 
+        allMessages.forEach(msg => {
+            const div = document.createElement('div');
+            const typeMap = { 'r': 'right', 'l': 'left', 'm': 'middle' };
+            div.className = 'bubble ' + (typeMap[msg[1]] || 'left');
+            div.innerHTML = linkify(msg[0]);
+            chat.appendChild(div);
+        });
 
-        // সেপারেটর লাইন
-        if(localMsgs.length > 0) {
-            container.innerHTML += '<div class="separator">My Messages</div>';
-        }
-
-        // LocalStorage মেসেজ রেন্ডার
-        localMsgs.forEach((m, index) => renderBubble(m.text, m.side, true, index));
+        if (isFirstLoad) { chat.scrollTop = chat.scrollHeight; isFirstLoad = false; }
+        else if (isAtBottom) { chat.scrollTop = chat.scrollHeight; }
     }
 
-    function renderBubble(text, side, isLocal, index) {
-        const div = document.createElement('div');
-        div.className = `bubble ${side}`;
-        div.innerText = text;
-        if(isLocal) {
-            div.oncontextmenu = (e) => { e.preventDefault(); showMenu(e, index); };
-        }
-        document.getElementById('chat').appendChild(div);
+    async function sendLiveChatMessage() {
+        const inputField = document.getElementById('chat-input');
+        const rawMessage = inputField.value.trim();
+        if (!rawMessage) return;
+
+        const messages = JSON.parse(localStorage.getItem("samy_chat_cache")) || [];
+        messages.push([rawMessage, 'r', Date.now()]);
+        localStorage.setItem("samy_chat_cache", JSON.stringify(messages));
+
+        inputField.value = '';
+        loadMessages();
+
+        fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ chat_id: TELEGRAM_CHAT_ID, text: rawMessage })
+        });
     }
 
-    function sendMessage() {
-        const input = document.getElementById('msgInput');
-        if(!input.value) return;
-        const localMsgs = JSON.parse(localStorage.getItem('myMsgs') || '[]');
-        localMsgs.push({ text: input.value, side: 'right' });
-        localStorage.setItem('myMsgs', JSON.stringify(localMsgs));
-        input.value = '';
-        loadAll();
-    }
-
-    // মেনু এবং এডিট লজিক
-    let targetIndex = null;
-    function showMenu(e, index) {
-        targetIndex = index;
-        const menu = document.getElementById('menu');
-        menu.style.display = 'block';
-        menu.style.left = e.pageX + 'px';
-        menu.style.top = e.pageY + 'px';
-    }
-
-    function deleteMsg() {
-        let localMsgs = JSON.parse(localStorage.getItem('myMsgs'));
-        localMsgs.splice(targetIndex, 1);
-        localStorage.setItem('myMsgs', JSON.stringify(localMsgs));
-        document.getElementById('menu').style.display = 'none';
-        loadAll();
-    }
-
-    function toggleSide() {
-        let localMsgs = JSON.parse(localStorage.getItem('myMsgs'));
-        localMsgs[targetIndex].side = localMsgs[targetIndex].side === 'right' ? 'left' : 'right';
-        localStorage.setItem('myMsgs', JSON.stringify(localMsgs));
-        document.getElementById('menu').style.display = 'none';
-        loadAll();
-    }
-
-    document.addEventListener('click', () => document.getElementById('menu').style.display = 'none');
-    loadAll();
+    loadMessages();
+    setInterval(loadMessages, 10000);
 </script>
+
 </body>
 </html>
